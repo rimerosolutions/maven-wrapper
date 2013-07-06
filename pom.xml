@@ -7,7 +7,7 @@
   </parent>
   <groupId>com.rimerosolutions.maven.plugins</groupId>
   <artifactId>wrapper-maven-plugin</artifactId>
-  <version>0.0.3</version>
+  <version>0.0.1-SNAPSHOT</version>
   <name>Maven Wrapper</name>
   <packaging>maven-plugin</packaging>
   <description>Maven Command Line Wrapper</description>
