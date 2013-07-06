@@ -27,6 +27,7 @@ A wrapper created with Maven 3.0.4 will request Maven 3.0.4 if it's not already 
 | wrapper:wrapper | Generates the Maven Command Line Wrapper for the current project. |
 
 ** wrapper:wrapper
+
 *** Full name
 
 =com.rimerosolutions.maven.plugins:wrapper-maven-plugin:0.0.1-SNAPSHOT:wrapper=
@@ -64,7 +65,7 @@ Display help information on maven-wrapper-plugin.
 
 Call =mvn wrapper:help -Ddetail=true -Dgoal=<goal-name>= to display parameter details.
 
-*Attributes*:
+*** Attributes
 
 The goal is thread-safe and supports parallel builds. A project is required.
 
