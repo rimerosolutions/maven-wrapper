@@ -1,3 +1,7 @@
 .classpath
 .project
 .settings
+target
+release.properties
+pom.xml.releaseBackup
+TAGS

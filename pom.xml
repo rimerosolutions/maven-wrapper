@@ -1,15 +1,17 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <artifactId>maven-parent</artifactId>
-    <groupId>org.apache.maven</groupId>
-    <version>23</version>
+    <groupId>org.sonatype.oss</groupId>
+    <artifactId>oss-parent</artifactId>
+    <version>7</version>
   </parent>
+  <groupId>com.rimerosolutions.maven.plugins</groupId>
   <artifactId>wrapper-maven-plugin</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.3</version>
   <name>Maven Wrapper</name>
   <packaging>maven-plugin</packaging>
-  <description>Maven Command Wrapper</description>
+  <description>Maven Command Line Wrapper</description>
+
   <licenses>
     <license>
       <name>The Apache Software License, Version 2.0</name>
@@ -17,14 +19,39 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
+
+  <developers>
+    <developer>
+      <id>rimerosolutions</id>
+      <name>Yves Zoundi</name>
+      <email>rimerosolutions@gmail.com</email>
+      <url>https://github.com/rimerosolutions</url>
+      <organization>Rimero Solutions</organization>
+      <organizationUrl>http://www.rimerosolutions.com</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <timezone>-5</timezone>
+    </developer>
+    <developer>
+      <id>bdemers</id>
+      <name>Brian Demers</name>
+      <url>https://github.com/bdemers</url>
+    </developer>
+  </developers>
+
   <scm>
-    <connection>scm:git:git@github.com:rimerosolutions/maven-wrapper-plugin.git</connection>
-    <developerConnection>scm:git:git@github.com:rimerosolutions/maven-wrapper-plugin.git</developerConnection>
+    <connection>scm:git:https://github.com/rimerosolutions/maven-wrapper.git</connection>
+    <developerConnection>scm:git:https://github.com/rimerosolutions/maven-wrapper.git</developerConnection>
     <url>https://github.com/rimerosolutions/maven-wrapper</url>
   </scm>
+
   <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <minimalMavenVersion>3.0.2</minimalMavenVersion>
   </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
@@ -49,6 +76,7 @@
     <dependency>
       <groupId>org.apache.maven.plugin-tools</groupId>
       <artifactId>maven-plugin-annotations</artifactId>
+      <version>3.0</version>
       <!-- annotations are not needed for plugin execution so you can remove this dependency
            for execution with using provided scope -->
       <scope>provided</scope>
@@ -97,6 +125,7 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
   <build>
     <plugins>
       <plugin>
@@ -124,4 +153,5 @@
       </plugin>
     </plugins>
   </build>
+
 </project>

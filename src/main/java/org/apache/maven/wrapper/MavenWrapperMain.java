@@ -106,7 +106,7 @@ public class MavenWrapperMain
         try
         {
                InputStream resourceAsStream =
-                MavenWrapperMain.class.getResourceAsStream("/META-INF/maven/org.apache.maven/wrapper-maven-plugin/pom.properties");
+                       MavenWrapperMain.class.getResourceAsStream("/META-INF/maven/com.rimerosolutions.maven.plugins/wrapper-maven-plugin/pom.properties");
             if ( resourceAsStream == null )
             {
                 throw new RuntimeException( "No maven properties found." );
