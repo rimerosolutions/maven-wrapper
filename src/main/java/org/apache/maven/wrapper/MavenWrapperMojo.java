@@ -1,5 +1,5 @@
 /*
- * Copyright 2013. Yves Zoundi
+ * Copyright 2013. Rimero Solutions
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ import org.codehaus.plexus.component.repository.exception.ComponentLookupExcepti
 
 @Mojo(name = "wrapper", requiresProject = true)
 /**
- * Generates a Maven Command Wrapper for the current project.
+ * Generates a Maven Command Line Wrapper for the current project.
  *
  * @author Yves Zoundi
  */
@@ -79,7 +79,7 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
         private String baseDistributionUrl;
 
         @Parameter(property = "wrapperDirectory", defaultValue = "${basedir}/maven")
-        /** The wrapper jar output folder */
+        /** The wrapper jar output folder. The default value is maven inside the project root folder */
         private String wrapperDirectory;
 
         private static final String WRAPPER_TEMPLATES_LOCATION = "com/rimerosolutions/maven/plugins/wrapper/";

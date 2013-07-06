@@ -1,30 +1,138 @@
+#+TITLE: Maven Command Line Wrapper
+
 * Introduction
 This is a copy of the [[http://www.gradle.org/docs/current/userguide/gradle_wrapper.html][Gradle wrapper]] ported for use with [[http://maven.apache.org][Apache Maven]].
-This fork provides the Maven wrapper feature as a Maven plugin for more flexible reuse/integration.
 
-To run this build as an example run the 'mvnw' script at the root of this repo as you would normally run 'mvn'
-For example if you typically run 
+The Maven Command Line Wrapper will auto-download and install Apache Maven from the Internet and then run your Maven goals.
+
+This is fork of [[https://github.com/bdemers/maven-wrapper][bdemers' maven-wrapper]] in order to provide the Maven Wrapper as a Maven plugin, for more flexible reuse/integration.
+
+For example if used to run
 
  : mvn clean install
 
 Then you would now run (without a leading =./= for MS Windows)
  : ./mvnw clean install
 	
-Now that the plugin is installed in your Maven cache, you can integrate the wrapper with your existing or new Maven projects.
+A wrapper created with Maven 3.0.4 will request Maven 3.0.4 if it's not already installed on the user's machine.
+
+* Maven Goals
+
+** Summary
+
+| Goal            | Description                                                       |
+|-----------------+-------------------------------------------------------------------|
+| wrapper:help    | Displays the Maven Wrapper plugin help.                           |
+|-----------------+-------------------------------------------------------------------|
+| wrapper:wrapper | Generates the Maven Command Line Wrapper for the current project. |
+
+** wrapper:wrapper
+*** Full name
+
+=com.rimerosolutions.maven.plugins:wrapper-maven-plugin:0.0.1-SNAPSHOT:wrapper=
+
+*** Description
+
+Generates a Maven Command Line Wrapper.
+
+Maven will be downloaded if needed, and stored in your =$HOME/.m2/maven/wrapper= folder.
+
+*** Attributes
+
+A project is required. No thread-safety guarantees.
+
+*** Optional parameters
+
+| Name                | Type   | Since | Description                                                                               |
+|---------------------+--------+-------+-------------------------------------------------------------------------------------------|
+| baseDistributionUrl | String | -     | The base URL where Maven will be fetched from. The default value is                       |
+|                     |        |       | https://repository.apache.org/content/repositories/releases/org/apache/maven/apache-maven |
+|---------------------+--------+-------+-------------------------------------------------------------------------------------------|
+| wrapperDirectory    | String | -     | Wrapper support files output folder. It must be a sub-folder of the project.              |
+|                     |        |       | The relative directory will be auto-created if it doesn't exists.                         |
+|                     |        |       | The default value is =${basedir}/maven=.                                                  |
+          
+** wrapper:help
+
+*** Full name
+
+=com.rimerosolutions.maven.plugins:wrapper-maven-plugin:0.0.1-SNAPSHOT:help=
+
+*** Description
+
+Display help information on maven-wrapper-plugin.
+
+Call =mvn wrapper:help -Ddetail=true -Dgoal=<goal-name>= to display parameter details.
+
+*Attributes*:
+
+The goal is thread-safe and supports parallel builds. A project is required.
+
+*** Optional parameters
+
+| Name       | Type    | Since | Description                                                                                                |
+|------------+---------+-------+------------------------------------------------------------------------------------------------------------|
+| -detail    | boolean | -     | If true, display all settable properties for each goal. Default value is: false. User property is: detail. |
+|            |         |       | Default value is: *false*. User property is: *detail*.                                                     |
+|------------+---------+-------+------------------------------------------------------------------------------------------------------------|
+| goal       | String  | -     | The name of the goal for which to show help. If unspecified, all goals will be displayed.                  |
+|            |         |       | User property is: *goal*.                                                                                  |
+|------------+---------+-------+------------------------------------------------------------------------------------------------------------|
+| indentSize | int     | -     | The number of spaces per indentation level, should be positive.                                            |
+|            |         |       | Default Value is: *indentSize*                                                                             |
+|------------+---------+-------+------------------------------------------------------------------------------------------------------------|
+| lineLength | int     | -     | The maximum length of a display line, should be positive. Default value is: 80.                            |
+|            |         |       | User property is: lineLength.                                                                              |
+
+* Maven Usage
+
+** Using the Sonatype Snapshot build.
+In your =pom.xml= (build/plugins section), add a reference to the plugin and also add the plugin repository location.
+
+ : <project xmlns="http://maven.apache.org/POM/4.0.0"
+ :          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ :          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+ :   <!-- other maven project elements -->
+ : 
+ : 
+ :   <build>
+ :     <!-- other build elements -->
+ :     <plugins>
+ :       <!-- other plugins -->
+ :
+ :       <!-- ADD A REFERENCE TO THE MAVEN WRAPPER PLUGIN -->
+ :       <plugin>
+ :         <groupId>com.rimerosolutions.maven.plugins</groupId>
+ :         <artifactId>wrapper-maven-plugin</artifactId>
+ :         <version>0.0.1-SNAPSHOT</version>
+ :         <configuration>
+ : 	    <!-- optional base distribution url --> 
+ :          <baseDistributionUrl>https://repository.apache.org/content/repositories/releases/org/apache/maven/apache-maven</baseDistributionUrl>
+ :          <!-- optional wrapper jar output folder -->
+ :           <wrapperDirectory>${basedir}/maven</wrapperDirectory>
+ :         </configuration>
+ :       </plugin>
+ : 
+ :     </plugins>
+ :   </build>
+ : 
+ :   <!-- ADD A REFERENCE TO THE SONATYPE SNAPSHOTS REPOSITORY -->
+ :   <pluginRepositories>
+ :     <pluginRepository>
+ :       <id>sonatype.snapshots</id>
+ :       <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+ :     </pluginRepository>
+ :   </pluginRepositories>
+ : </project>
 
 
-The wrapper will **always** your current Maven version.
-A wrapper created with Maven 3.0.4 will request Maven 3.0.4 if it's not already installed on the user's machine.	
-
-* Usage
-
-** Integration
-In the =build= section of your pom.xml, add the following :
+** After a build from source (mvn clean install)
+In the =build= section of a project Maven =pom.xml=, add the following :
 
  : <build>
  :   <plugins>
  :     <plugin>
- :       <groupId>org.apache.maven</groupId>
+ :       <groupId>com.rimerosolutions.maven.plugins</groupId>
  :       <artifactId>wrapper-maven-plugin</artifactId>
  :       <version>0.0.1-SNAPSHOT</version>
  :       <!--
@@ -36,26 +144,14 @@ In the =build= section of your pom.xml, add the following :
  :   </plugins>
  : </build>
 
-As shown above an optional =baseDistributionUrl= setting can be provided as configuration parameter.
-
-The default base distribution URL is https://repository.apache.org/content/repositories/releases/org/apache/maven/apache-maven.
-
-The download URL pattern is =<baseDistributionUrl>/<mavenVersion>/apache-maven-<mavenVersion>-bin.zip=.
 	
 ** Generating the Maven wrapper
-Run the following command to generate the wrapper and supporting files.
+After integrating the wrapper in another Maven project, run the following command to generate the wrapper.
 
  : mvn wrapper:wrapper
 
 The =mvnw= and =mwnw.bat= command wrappers are generated at the root of the project folder.
 	
-The =maven/wrapper= folder is generated with the relevant jar and properties file in the project directory.
-
-** Maven goals
-- =wrapper:wrapper= : Generates the Maven Command Wrapper for the current project.
-- =wrapper:help= : Displays the Maven Wrapper plugin help.
+The =maven= folder is generated with the relevant jar and properties file in the project directory.
 
 You can now start using either the =mvnw= or =mvnw.bat= commands on any project without an existing maven installation!
-
-** Sharing the plugin among developers
-If possible, it's better to publish the Maven wrapper build artifact to your Corporate/Private Repository Manager, as this plugin is not available on Maven central.
