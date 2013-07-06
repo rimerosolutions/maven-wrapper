@@ -136,9 +136,8 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
                         wrapperDestFolder.mkdirs();
 
                         String baseDirPath = baseDir.getAbsolutePath();
-                        getLog().info("Base dir is " + baseDir.getAbsolutePath());
                         String wrapperFolderPath = wrapperDestFolder.getAbsolutePath();
-                        getLog().info("wrapperfolderdir is " + wrapperFolderPath);
+
                         int pos = wrapperFolderPath.indexOf(baseDirPath);
 
                         if(pos == -1) {
