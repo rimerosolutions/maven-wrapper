@@ -16,6 +16,8 @@ Then you would now run (without a leading =./= for MS Windows)
 	
 A wrapper created with Maven 3.0.4 will request Maven 3.0.4 if it's not already installed on the user's machine.
 
+Notes: You need a valid JDK at least 1.6. The plugin was tested with Maven 3.0.2 and above.
+
 * Maven Goals
 
 ** Summary
