@@ -18,6 +18,8 @@ A wrapper created with Maven 3.0.4 will request Maven 3.0.4 if it's not already 
 
 Notes: You need a valid JDK at least 1.6. The plugin was tested with Maven 3.0.2 and above.
 
+For a small practical integration example, checkout the [[https://github.com/rimerosolutions/maven-wrapper-example][Maven Command Line Wrapper Example]] project.
+
 * Maven Goals
 
 ** Summary
