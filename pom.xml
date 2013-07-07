@@ -28,6 +28,13 @@ limitations under the License.
   <name>Maven Wrapper</name>
   <packaging>maven-plugin</packaging>
   <description>Maven Command Line Wrapper</description>
+  <url>https://github.com/rimerosolutions/maven-wrapper/</url>
+  <inceptionYear>2013</inceptionYear>
+
+  <organization>
+    <name>Rimero Solutions</name>
+    <url>http://www.rimerosolutions.com</url>
+  </organization>
 
   <licenses>
     <license>
