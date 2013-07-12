@@ -24,7 +24,7 @@ For a small practical integration example, checkout the [[https://github.com/rim
 
 For the list of goals and a usage guide, please consult the [[https://github.com/rimerosolutions/maven-wrapper/wiki][wiki]].
 	
-** Generating the Maven wrapper
+* Generating the Maven wrapper
 After integrating the wrapper in another Maven project, run the following command to generate the wrapper.
 
  : mvn wrapper:wrapper
