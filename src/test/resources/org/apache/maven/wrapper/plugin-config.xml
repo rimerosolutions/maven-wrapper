@@ -1,0 +1,28 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+        <build>
+                <!-- other build elements -->
+                <plugins>
+                        <!-- other plugins -->
+
+                        <!-- ADD A REFERENCE TO THE MAVEN WRAPPER PLUGIN -->
+                        <plugin>
+                                <groupId>com.rimerosolutions.maven.plugins</groupId>
+                                <artifactId>wrapper-maven-plugin</artifactId>
+                                <version>0.0.1-SNAPSHOT</version>
+                                <configuration>
+                                        <!-- optional base distribution url -->
+                                        <baseDistributionUrl>http://mirrors.ibiblio.org/maven2/org/apache/maven/apache-maven</baseDistributionUrl>
+                                        <!-- optional folder for generated scripts -->
+                                        <wrapperScriptDirectory>${basedir}/target/test-wrapper</wrapperScriptDirectory>
+                                        <!-- optional wrapper jar output folder -->
+                                        <wrapperDirectory>${basedir}/target/test-wrapper/support</wrapperDirectory>
+                                        <!-- optional specific maven version -->
+                                        <mavenVersion>0.0.1</mavenVersion>
+                                </configuration>
+                        </plugin>
+
+                </plugins>
+        </build>
+</project>
