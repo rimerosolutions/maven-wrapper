@@ -44,6 +44,7 @@ import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.context.Context;
 import org.codehaus.plexus.context.ContextException;
+import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.personality.plexus.lifecycle.phase.Contextualizable;
 
 @Mojo(name = "wrapper", requiresProject = true)
@@ -61,6 +62,10 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
         public static final String SCRIPT_FILENAME_WINDOWS = "mvnw.bat";
         public static final String SCRIPT_FILENAME_UNIX = "mvnw";
 
+        private static final String WRAPPER_TEMPLATES_LOCATION = "com/rimerosolutions/maven/plugins/wrapper/";
+        private static final String WRAPPER_PROPERTIES_COMMENTS = "Maven download properties";
+        private static final String ENCODING_UTF8 = "UTF-8";
+
         static final String[] LAUNCHER_FILE_SEPARATORS = { "\\", "/" };
         static final String[] LAUNCHER_FILE_BASE_NAMES = { SCRIPT_FILENAME_WINDOWS, SCRIPT_FILENAME_UNIX };
         static final String[] LAUNCHERS_PARTS_WINDOWS = { "mvnw_header.bat", "", "mvnw_footer.bat" };
@@ -76,7 +81,7 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
         private PluginDescriptor plugin;
 
         @Parameter(property = "baseDistributionUrl", defaultValue = "https://repository.apache.org/content/repositories/releases/org/apache/maven/apache-maven")
-        /** Base distribution URL for the Maven binaries download. The default base distribution URL is https://repository.apache.org/content/repositories/releases/org/apache/maven/apache-maven */
+        /** Base distribution URL for the Maven binaries download. */
         private String baseDistributionUrl;
 
         @Parameter(property = "wrapperScriptDirectory", defaultValue = "${basedir}")
@@ -84,18 +89,16 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
         private String wrapperScriptDirectory;
 
         @Parameter(property = "wrapperDirectory", defaultValue = "${basedir}/maven")
-        /** The wrapper jar output folder. The default value is 'maven' and relative to the wrapper scripts directory */
+        /** The wrapper jar output folder. The location should be a sub-folder of the wrapper scripts directory */
         private String wrapperDirectory;
 
         @Parameter(property = "mavenVersion", required = false)
         /** The Maven version to use for the generate wrapper */
         private String mavenVersion;
 
-        private static final String WRAPPER_TEMPLATES_LOCATION = "com/rimerosolutions/maven/plugins/wrapper/";
-
         /**
          * Sets the plugin descriptor (Exposed for unit tests)
-         * 
+         *
          * @param plugin The plugin descriptor
          */
         protected void setPlugin(PluginDescriptor plugin) {
@@ -104,7 +107,7 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
 
         /**
          * Sets the Maven version (Exposed for unit tests only)
-         * 
+         *
          * @param mavenVersion The Maven version to use for the wrapper
          */
         protected void setMavenVersion(String mavenVersion) {
@@ -113,7 +116,7 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
 
         /**
          * Returns the Maven version if set (Exposed for unit tests only)
-         * 
+         *
          * @return The Maven version to use for the wrapper
          */
         protected String getMavenVersion() {
@@ -122,7 +125,7 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
 
         /**
          * Returns the wrapper folder (Exposed for unit tests only)
-         * 
+         *
          * @return the wrapper output folder
          */
         protected String getWrapperDirectory() {
@@ -131,7 +134,7 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
 
         /**
          * Returns the wrapper folder (Exposed for unit tests only)
-         * 
+         *
          * @return the wrapper output folder
          */
         protected String getWrapperScriptDirectory() {
@@ -140,7 +143,7 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
 
         /**
          * Returns the wrapper base distribution URL (Exposed for unit tests only)
-         * 
+         *
          * @return the wrapper base distribution URL
          */
         protected String getBaseDistributionUrl() {
@@ -168,7 +171,7 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
                         sb.append(separator);
                 }
 
-                sb.insert(0, "." + separator);
+                sb.insert(0, '.' + separator);
 
                 return sb.toString();
         }
@@ -234,7 +237,7 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
                                 if (launcherFilePartName.equals("")) {
                                         String fileSeparator = LAUNCHER_FILE_SEPARATORS[i];
                                         String jarPath = composePath(fileSeparator, pathNameDeque, WRAPPER_JAR_FILE_NAME);
-                                        streams[j] = new ByteArrayInputStream(jarPath.getBytes("UTF-8"));
+                                        streams[j] = new ByteArrayInputStream(jarPath.getBytes(ENCODING_UTF8));
                                 } else {
                                         String launcherLocation = WRAPPER_TEMPLATES_LOCATION + launcherFilePartName;
                                         InputStream mvnLauncherStream = classLoader.getResourceAsStream(launcherLocation);
@@ -271,17 +274,15 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
                         is = new FileInputStream(pluginArtifact.getFile());
                         streamsToFile(new InputStream[] { is }, new File(wrapperSupportFolder, WRAPPER_JAR_FILE_NAME));
                         fileOut = new FileOutputStream(file);
-                        props.store(fileOut, "Maven download properties");
+                        props.store(fileOut, WRAPPER_PROPERTIES_COMMENTS);
 
                 } finally {
-                        try {
-                                if (fileOut != null) {
-                                        fileOut.close();
-                                }
-                        } finally {
-                                if (is != null) {
-                                        is.close();
-                                }
+                        if (fileOut != null) {
+                                IOUtil.close(fileOut);
+                        }
+
+                        if (is != null) {
+                                IOUtil.close(is);
                         }
                 }
         }
@@ -306,26 +307,22 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
                                                 buffer.clear();
                                         }
                                 } finally {
-                                        try {
-                                                if (inChannel != null) {
-                                                        inChannel.close();
-                                                }
-                                        } finally {
-                                                if (stream != null) {
-                                                        stream.close();
-                                                }
+                                        if (stream != null) {
+                                                IOUtil.close(stream);
+                                        }
+
+                                        if (inChannel != null) {
+                                                inChannel.close();
                                         }
                                 }
                         }
                 } finally {
-                        try {
-                                if (outChannel != null) {
-                                        outChannel.close();
-                                }
-                        } finally {
-                                if (fos != null) {
-                                        fos.close();
-                                }
+                        if (fos != null) {
+                                IOUtil.close(fos);
+                        }
+
+                        if (outChannel != null) {
+                                outChannel.close();
                         }
                 }
         }

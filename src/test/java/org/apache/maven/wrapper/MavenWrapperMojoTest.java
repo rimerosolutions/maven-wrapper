@@ -48,15 +48,16 @@ public class MavenWrapperMojoTest extends AbstractMojoTestCase {
         private File wrapperDir;
         private File wrapperSupportDir;
 
-        private MavenWrapperMojo getMavenWrapperMojo() throws Exception {
+        private MavenWrapperMojo lookupMavenWrapperMojo() throws Exception {
                 File pluginXml = new File(getBasedir(), PLUGIN_TEST_FILE_LOCATION);
                 PlexusConfiguration pluginConfiguration = extractPluginConfiguration(MAVEN_WRAPPER_PLUGIN_NAME, pluginXml);
-                MavenWrapperMojo mojo = (MavenWrapperMojo) configureMojo(MavenWrapperMojo.class.newInstance(), pluginConfiguration);
+                MavenWrapperMojo mojoInstance = MavenWrapperMojo.class.newInstance();
+                MavenWrapperMojo mojo = (MavenWrapperMojo) configureMojo(mojoInstance, pluginConfiguration);
 
                 return mojo;
         }
 
-        private String getDistributionUrlFromWrapperProperties() throws IOException {
+        private String readDistributionUrlFromWrapperProperties() throws IOException {
                 InputStream in = null;
 
                 try {
@@ -86,12 +87,12 @@ public class MavenWrapperMojoTest extends AbstractMojoTestCase {
         }
 
         public void testMojoLookup() throws Exception {
-                MavenWrapperMojo mojo = getMavenWrapperMojo();
+                MavenWrapperMojo mojo = lookupMavenWrapperMojo();
                 assertNotNull(mojo);
         }
 
         public void testMojoParameters() throws Exception {
-                MavenWrapperMojo mojo = getMavenWrapperMojo();
+                MavenWrapperMojo mojo = lookupMavenWrapperMojo();
 
                 assertNotNull(mojo.getWrapperDirectory());
                 assertNotNull(mojo.getBaseDistributionUrl());
@@ -111,7 +112,7 @@ public class MavenWrapperMojoTest extends AbstractMojoTestCase {
                 PluginDescriptor pluginDescriptor = mock(PluginDescriptor.class);
                 when(pluginDescriptor.getPluginArtifact()).thenReturn(artifact);
 
-                MavenWrapperMojo mojo = getMavenWrapperMojo();
+                MavenWrapperMojo mojo = lookupMavenWrapperMojo();
 
                 mojo.setPlugin(pluginDescriptor);
                 mojo.setMavenVersion(MAVEN_RUNTIME_VERSION);
@@ -121,6 +122,6 @@ public class MavenWrapperMojoTest extends AbstractMojoTestCase {
                 assertTrue(new File(mojo.getWrapperScriptDirectory(), MavenWrapperMojo.SCRIPT_FILENAME_WINDOWS).exists());
                 assertTrue(new File(mojo.getWrapperDirectory(), MavenWrapperMojo.WRAPPER_PROPERTIES_FILE_NAME).exists());
                 assertTrue(new File(mojo.getWrapperDirectory(), MavenWrapperMojo.WRAPPER_JAR_FILE_NAME).exists());
-                assertEquals(getExpectedDistributionUrl(), getDistributionUrlFromWrapperProperties());
+                assertEquals(getExpectedDistributionUrl(), readDistributionUrlFromWrapperProperties());
         }
 }
