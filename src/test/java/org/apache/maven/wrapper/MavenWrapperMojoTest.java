@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
@@ -55,6 +56,29 @@ public class MavenWrapperMojoTest extends AbstractMojoTestCase {
                 return mojo;
         }
 
+        private String getDistributionUrlFromWrapperProperties() throws IOException {
+                InputStream in = null;
+
+                try {
+                        in = new FileInputStream(new File(wrapperSupportDir, MavenWrapperMojo.WRAPPER_PROPERTIES_FILE_NAME));
+                        Properties props = new Properties();
+                        props.load(in);
+
+                        return props.getProperty(MavenWrapperMojo.DISTRIBUTION_URL_PROPERTY);
+                } finally {
+                        if (in != null) {
+                                IOUtils.closeQuietly(in);
+                        }
+                }
+        }
+
+        private String getExpectedDistributionUrl() {
+                StringBuilder sb = new StringBuilder(TEST_DISTRIBUTION_URL).append('/');
+                sb.append(MavenWrapperMojo.DIST_FILENAME_PATH_TEMPLATE);
+
+                return String.format(sb.toString(), MAVEN_RUNTIME_VERSION, MAVEN_RUNTIME_VERSION);
+        }
+
         protected void setUp() throws Exception {
                 super.setUp();
                 wrapperDir = new File(getBasedir(), TEST_WRAPPER_DIR_LOCATION);
@@ -83,13 +107,13 @@ public class MavenWrapperMojoTest extends AbstractMojoTestCase {
         public void testMojoExecution() throws Exception {
                 Artifact artifact = mock(Artifact.class);
                 when(artifact.getFile()).thenReturn(new File(getBasedir(), PLUGIN_TEST_ARTIFACT_LOCATION));
-                
+
                 PluginDescriptor pluginDescriptor = mock(PluginDescriptor.class);
                 when(pluginDescriptor.getPluginArtifact()).thenReturn(artifact);
-                
+
                 MavenWrapperMojo mojo = getMavenWrapperMojo();
-                
-                mojo.setPlugin(pluginDescriptor);                
+
+                mojo.setPlugin(pluginDescriptor);
                 mojo.setMavenVersion(MAVEN_RUNTIME_VERSION);
                 mojo.execute();
 
@@ -97,23 +121,6 @@ public class MavenWrapperMojoTest extends AbstractMojoTestCase {
                 assertTrue(new File(mojo.getWrapperScriptDirectory(), MavenWrapperMojo.SCRIPT_FILENAME_WINDOWS).exists());
                 assertTrue(new File(mojo.getWrapperDirectory(), MavenWrapperMojo.WRAPPER_PROPERTIES_FILE_NAME).exists());
                 assertTrue(new File(mojo.getWrapperDirectory(), MavenWrapperMojo.WRAPPER_JAR_FILE_NAME).exists());
-
-                InputStream in = null;
-
-                try {
-                        in = new FileInputStream(new File(wrapperSupportDir, MavenWrapperMojo.WRAPPER_PROPERTIES_FILE_NAME));
-                        Properties props = new Properties();
-                        props.load(in);
-
-                        StringBuilder sb = new StringBuilder(TEST_DISTRIBUTION_URL).append('/');
-                        sb.append(MavenWrapperMojo.DIST_FILENAME_PATH_TEMPLATE);
-                        String expectedDistUrl = String.format(sb.toString(), MAVEN_RUNTIME_VERSION, MAVEN_RUNTIME_VERSION);
-
-                        assertEquals(expectedDistUrl, props.getProperty(MavenWrapperMojo.DISTRIBUTION_URL_PROPERTY));
-                } finally {
-                        if (in != null) {
-                                IOUtils.closeQuietly(in);
-                        }
-                }
+                assertEquals(getExpectedDistributionUrl(), getDistributionUrlFromWrapperProperties());
         }
 }
