@@ -1,5 +1,9 @@
 #+TITLE: Maven Command Line Wrapper
 
+#+ATTR_HTML: alt="Travis CI Build Status" title="Build status" align="left"
+[[https://travis-ci.org/rimerosolutions/maven-wrapper.png]]
+#+HTML: <br clear="all"><br>
+
 * Introduction
 This is a copy of the [[http://www.gradle.org/docs/current/userguide/gradle_wrapper.html][Gradle wrapper]] ported for use with [[http://maven.apache.org][Apache Maven]].
 

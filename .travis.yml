@@ -1,0 +1,8 @@
+language: java
+install: ./mvnw clean
+script: ./mvnw test
+notifications:
+  email: false
+branches:
+  only:
+    - master
