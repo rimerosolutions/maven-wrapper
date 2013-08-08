@@ -17,6 +17,8 @@ package org.apache.maven.wrapper;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -123,5 +125,7 @@ public class MavenWrapperMojoTest extends AbstractMojoTestCase {
                 assertTrue(new File(mojo.getWrapperDirectory(), MavenWrapperMojo.WRAPPER_PROPERTIES_FILE_NAME).exists());
                 assertTrue(new File(mojo.getWrapperDirectory(), MavenWrapperMojo.WRAPPER_JAR_FILE_NAME).exists());
                 assertEquals(getExpectedDistributionUrl(), readDistributionUrlFromWrapperProperties());
+
+                verify(artifact, times(1)).getFile();
         }
 }
