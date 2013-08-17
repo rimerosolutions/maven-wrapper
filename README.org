@@ -5,6 +5,7 @@
 
 * Introduction
 This is a copy of the [[http://www.gradle.org/docs/current/userguide/gradle_wrapper.html][Gradle wrapper]] ported for use with [[http://maven.apache.org][Apache Maven]].
+=maven-wrapper= is now available from [[http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.rimerosolutions.maven.plugins%22][Maven Central]].
 
 The Maven Command Line Wrapper will auto-download and install Apache Maven from the Internet and then run your Maven goals.
 
