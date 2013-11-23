@@ -24,7 +24,6 @@
 @REM JAVA_HOME - location of a JDK home dir
 @REM
 @REM Optional ENV vars
-@REM M2_HOME - location of maven2's installed home dir
 @REM MAVEN_BATCH_ECHO - set to 'on' to enable the echoing of the batch commands
 @REM MAVEN_BATCH_PAUSE - set to 'on' to wait for a key stroke before ending
 @REM MAVEN_OPTS - parameters passed to the Java VM when running Maven
@@ -63,7 +62,7 @@ echo.
 goto error
 
 :OkJHome
-if exist "%JAVA_HOME%\bin\java.exe" goto chkMHome
+if exist "%JAVA_HOME%\bin\java.exe" goto init
 
 echo.
 echo ERROR: JAVA_HOME is set to an invalid directory.
@@ -72,39 +71,6 @@ echo Please set the JAVA_HOME variable in your environment to match the
 echo location of your Java installation
 echo.
 goto error
-
-:chkMHome
-if not "%M2_HOME%"=="" goto valMHome
-
-if "%OS%"=="Windows_NT" SET "M2_HOME=%~dp0.."
-if "%OS%"=="WINNT" SET "M2_HOME=%~dp0.."
-if not "%M2_HOME%"=="" goto valMHome
-
-echo.
-echo ERROR: M2_HOME not found in your environment.
-echo Please set the M2_HOME variable in your environment to match the
-echo location of the Maven installation
-echo.
-goto error
-
-:valMHome
-
-:stripMHome
-if not "_%M2_HOME:~-1%"=="_\" goto checkMBat
-set "M2_HOME=%M2_HOME:~0,-1%"
-goto stripMHome
-
-:checkMBat
-if exist "%M2_HOME%\bin\mvn.bat" goto init
-
-echo.
-echo ERROR: M2_HOME is set to an invalid directory.
-echo M2_HOME = "%M2_HOME%"
-echo Please set the M2_HOME variable in your environment to match the
-echo location of the Maven installation
-echo.
-goto error
-@REM ==== END VALIDATION ====
 
 :init
 @REM Decide how to startup depending on the version of windows
@@ -144,7 +110,8 @@ goto Win9xApp
 SET MAVEN_JAVA_EXE="%JAVA_HOME%\bin\java.exe"
 
 @REM -- Regular WinNT shell
-set WRAPPER_JAR="".\maven\maven-wrapper.jar""
+set WRAPPER_JAR=""
+.\maven\maven-wrapper.jar""
 goto runm2
 
 @REM Start MAVEN2
