@@ -110,4 +110,4 @@ goto Win9xApp
 SET MAVEN_JAVA_EXE="%JAVA_HOME%\bin\java.exe"
 
 @REM -- Regular WinNT shell
-set WRAPPER_JAR=""
+set WRAPPER_JAR=

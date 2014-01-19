@@ -71,6 +71,7 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
         static final String[] LAUNCHERS_PARTS_WINDOWS = { "mvnw_header.bat", "", "mvnw_footer.bat" };
         static final String[] LAUNCHERS_PARTS_UNIX = { "mvnw_header", "", "mvnw_footer" };
         static final String[][] LAUNCHERS_PARTS = { LAUNCHERS_PARTS_WINDOWS, LAUNCHERS_PARTS_UNIX };
+        static final String[] LAUNCHERS_JAR_PREFIXES = { "%~dp0", "\"$DIR/"};
 
         private PlexusContainer container;
 
@@ -171,8 +172,6 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
                         sb.append(separator);
                 }
 
-                sb.insert(0, '.' + separator);
-
                 return sb.toString();
         }
 
@@ -236,7 +235,9 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
 
                                 if (launcherFilePartName.equals("")) {
                                         String fileSeparator = LAUNCHER_FILE_SEPARATORS[i];
-                                        String jarPath = composePath(fileSeparator, pathNameDeque, WRAPPER_JAR_FILE_NAME);
+                                        String jarPathLocation = composePath(fileSeparator, pathNameDeque, WRAPPER_JAR_FILE_NAME);
+                                        String jarPathPrefix = LAUNCHERS_JAR_PREFIXES[i];
+                                        String jarPath = jarPathPrefix + jarPathLocation;
                                         streams[j] = new ByteArrayInputStream(jarPath.getBytes(ENCODING_UTF8));
                                 } else {
                                         String launcherLocation = WRAPPER_TEMPLATES_LOCATION + launcherFilePartName;

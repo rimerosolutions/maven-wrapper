@@ -131,6 +131,8 @@ if $cygwin; then
     CLASSPATH=`cygpath --path --windows "$CLASSPATH"`
 fi
 
+DIR=`dirname "$0"`
+
 exec "$JAVACMD" \
   $MAVEN_OPTS \
-  -classpath "\
+  -classpath \
