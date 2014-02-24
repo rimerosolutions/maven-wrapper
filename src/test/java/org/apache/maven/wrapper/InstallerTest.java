@@ -181,7 +181,7 @@ public class InstallerTest {
 
         private static void zipFile(String prefixPath, ZipOutputStream zout, File f) throws IOException {
                 InputStream fin = null;
-                
+
                 try {
                         ZipEntry ze = new ZipEntry(prefixPath + f.getName());
                         ze.setTime(f.lastModified());
@@ -215,20 +215,16 @@ public class InstallerTest {
 
         private static void zipFiles(String prefix, ZipOutputStream zout, File f) throws IOException {
                 String prefixPath = prefix  + "/";
-                if (f.isFile()) {
-                        if (prefixPath.startsWith("/")) {
-                                prefixPath = prefixPath.substring(1);
-                        }
 
+                if (prefixPath.startsWith("/")) {
+                        prefixPath = prefixPath.substring(1);
+                }
+
+                if (f.isFile()) {
                         zipFile(prefixPath, zout, f);
                 } else {
                         zipFolder(prefixPath, zout, f);
                 }
-
-
         }
-
-
-
 
 }

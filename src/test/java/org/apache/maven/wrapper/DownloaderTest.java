@@ -6,6 +6,7 @@ import java.io.File;
 import java.net.URI;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -19,20 +20,30 @@ public class DownloaderTest {
 
         @Before
         public void setUp() throws Exception {
-                download = new DefaultDownloader( "mvnw", "aVersion" );
-                testDir = new File( "target/test-files/DownloadTest" );
-                rootDir = new File( testDir, "root" );
-                downloadFile = new File( rootDir, "file" );
-                remoteFile = new File( testDir, "remoteFile" );
-                FileUtils.write( remoteFile, "sometext" );
+                download = new DefaultDownloader("mvnw", "aVersion");
+                testDir = new File("target/test-files/DownloadTest");
+                rootDir = new File(testDir, "root");
+                downloadFile = new File(rootDir, "file");
+
+                FileUtils.deleteQuietly(downloadFile);
+
+                remoteFile = new File(testDir, "remoteFile");
+                FileUtils.write(remoteFile, "sometext");
                 sourceRoot = remoteFile.toURI();
         }
 
         @Test
         public void testDownload() throws Exception {
                 assert !downloadFile.exists();
-                download.download( sourceRoot, downloadFile );
+                download.download(sourceRoot, downloadFile);
                 assert downloadFile.exists();
-                assertEquals( "sometext", FileUtils.readFileToString( downloadFile ) );
+                assertEquals("sometext", FileUtils.readFileToString(downloadFile));
         }
+
+        @After
+        public void tearDown() {
+                FileUtils.deleteQuietly(downloadFile);
+                FileUtils.deleteQuietly(remoteFile);
+        }
+
 }
