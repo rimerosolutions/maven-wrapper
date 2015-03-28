@@ -134,5 +134,6 @@ fi
 DIR=`dirname "$0"`
 
 exec "$JAVACMD" \
-  $MAVEN_OPTS \
+     $MAVEN_OPTS \
+     -Dmaven.multiModuleProjectDirectory="$PWD" \
   -classpath \

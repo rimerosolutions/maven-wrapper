@@ -4,7 +4,7 @@ goto runm2
 @REM Start MAVEN2
 :runm2
 set WRAPPER_LAUNCHER=org.apache.maven.wrapper.MavenWrapperMain
-%MAVEN_JAVA_EXE% %MAVEN_OPTS% -classpath %WRAPPER_JAR% %WRAPPER_LAUNCHER% %MAVEN_CMD_LINE_ARGS%
+%MAVEN_JAVA_EXE% %MAVEN_OPTS% -Dmaven.multiModuleProjectDirectory=%CD% -classpath %WRAPPER_JAR% %WRAPPER_LAUNCHER% %MAVEN_CMD_LINE_ARGS%
 if ERRORLEVEL 1 goto error
 goto end
 
