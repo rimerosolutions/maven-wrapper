@@ -74,6 +74,7 @@ limitations under the License.
                 <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
                 <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
                 <minimalMavenVersion>3.0.2</minimalMavenVersion>
+		<maven.javadoc.failOnError>false</maven.javadoc.failOnError>
         </properties>
 
         <dependencies>
@@ -178,7 +179,7 @@ limitations under the License.
                         <plugin>
                                 <groupId>org.apache.maven.plugins</groupId>
                                 <artifactId>maven-compiler-plugin</artifactId>
-                                <version>3.2</version>
+                                <version>3.3</version>
                                 <configuration>
                                         <source>1.6</source>
                                         <target>1.6</target>
