@@ -9,7 +9,10 @@ This is a copy of the [[http://www.gradle.org/docs/current/userguide/gradle_wrap
 
 The Maven Command Line Wrapper will auto-download and install Apache Maven from the Internet and then run your Maven goals.
 
-This is fork of [[https://github.com/bdemers/maven-wrapper][bdemers' maven-wrapper]] in order to provide the Maven Wrapper as a Maven plugin, for more flexible reuse/integration.
+This is a fork of [[https://github.com/bdemers/maven-wrapper][bdemers' maven-wrapper]] in order to provide the Maven Wrapper as a Maven plugin, for more flexible reuse/integration. Once you have a Maven project that you want to distribute, you can generate a wrapper so that 
+
+- The target audience can easily execute Maven goals without an existing Maven application as a pre-requisite.
+- You can control the version of Maven that is to be used to build the project in case there are Maven versions compatibility concerns.
 
 For example if used to run
 
@@ -27,7 +30,7 @@ For a small practical integration example, checkout the [[https://github.com/rim
 
 * Maven Goals and Usage
 
-For the list of goals and a usage guide, please consult the [[https://github.com/rimerosolutions/maven-wrapper/wiki][wiki]].
+For the list of goals and a usage guide, please consult the [[https://github.com/rimerosolutions/maven-wrapper/wiki][Wiki]].
 	
 * Generating the Maven wrapper
 After integrating the wrapper in another Maven project, run the following command to generate the wrapper.
