@@ -71,8 +71,8 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
         static final String[] LAUNCHERS_PARTS_WINDOWS = { "mvnw_header.bat", "", "mvnw_footer.bat" };
         static final String[] LAUNCHERS_PARTS_UNIX = { "mvnw_header", "", "mvnw_footer" };
         static final String[][] LAUNCHERS_PARTS = { LAUNCHERS_PARTS_WINDOWS, LAUNCHERS_PARTS_UNIX };
-        static final String[] LAUNCHERS_JAR_PREFIXES = { "%~dp0", "\"$DIR/"};
-
+        static final String[] LAUNCHERS_JAR_PREFIXES = { "%MAVEN_PROJECTBASEDIR%\", "\"$MAVEN_PROJECTBASEDIR/"};
+	
         private PlexusContainer container;
 
         @Component
