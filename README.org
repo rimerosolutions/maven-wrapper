@@ -43,3 +43,7 @@ The =mvnw= and =mwnw.bat= command wrappers are generated at the root of the proj
 The =maven= folder is generated with the relevant jar and properties file in the project directory.
 
 You can now start using either the =mvnw= or =mvnw.bat= commands on any project without an existing maven installation!
+
+* Articles
+
+[[http://jakub.marchwicki.pl/posts/2015/06/04/maven-wrapper/]]
