@@ -19,7 +19,9 @@ package org.apache.maven.wrapper;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -67,6 +69,10 @@ public class Installer
             tmpZipFile.delete();
             System.out.println( "Downloading " + distributionUrl );
             download.download( distributionUrl, tmpZipFile );
+            if ( configuration.isVerifyDownload() ) {
+                File localChecksumFile = new File( localZipFile.getParentFile(), localZipFile.getName() + ".checksum" );
+                verifyDistribution( configuration, distributionUrl, localChecksumFile, tmpZipFile );
+            }
             tmpZipFile.renameTo( localZipFile );
             downloaded = true;
         }
@@ -99,6 +105,25 @@ public class Installer
                                                        distributionUrl ) );
         }
         return dirs.get( 0 );
+    }
+
+    private void verifyDistribution( WrapperConfiguration configuration, URI distributionUrl, File localChecksumFile, File distributionZipFile )
+            throws Exception
+    {
+        URI checksumUri = configuration.getChecksum();
+
+        File tmpZipFile = new File( localChecksumFile.getParentFile(), localChecksumFile.getName() + ".part" );
+        tmpZipFile.delete();
+        System.out.println( "Verifying with " + checksumUri );
+        download.download( checksumUri, tmpZipFile );
+        tmpZipFile.renameTo( localChecksumFile );
+
+        BufferedReader checksumReader = new BufferedReader( new FileReader( localChecksumFile ) );
+        if ( !configuration.getChecksumAlgorithm().verify( new FileInputStream( distributionZipFile ), checksumReader.readLine() ) ) {
+            throw new RuntimeException(
+                                        String.format( "Maven distribution '%s' failed to verify against '%s'.",
+                                                distributionUrl, checksumUri ) );
+        }
     }
 
     private List<File> listDirs( File distDir )

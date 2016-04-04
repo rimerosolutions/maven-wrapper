@@ -21,8 +21,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author Hans Dockter
@@ -38,7 +36,7 @@ public class SystemPropertiesHandler {
 
                 Properties properties = new Properties();
                 FileInputStream inStream = null;
-                
+
                 try {
                         inStream = new FileInputStream(propertiesFile);
 
@@ -58,7 +56,7 @@ public class SystemPropertiesHandler {
                 for (Map.Entry e : properties.entrySet()) {
                         propertyMap.put(e.getKey().toString(), e.getValue().toString());
                 }
-                
+
                 return propertyMap;
         }
 }

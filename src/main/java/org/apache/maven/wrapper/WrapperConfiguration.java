@@ -37,6 +37,12 @@ public class WrapperConfiguration
 
     private String zipPath = Installer.DEFAULT_DISTRIBUTION_PATH;
 
+    private boolean verifyDownload = false;
+
+    private URI checksum = null;
+
+    private Checksum checksumAlgorithm = null;
+
     public boolean isAlwaysDownload()
     {
         return alwaysDownload;
@@ -105,5 +111,29 @@ public class WrapperConfiguration
     public void setZipPath( String zipPath )
     {
         this.zipPath = zipPath;
+    }
+
+    public boolean isVerifyDownload() {
+        return verifyDownload;
+    }
+
+    public void setVerifyDownload( boolean verifyDownload ) {
+        this.verifyDownload = verifyDownload;
+    }
+
+    public URI getChecksum() {
+        return checksum;
+    }
+
+    public void setChecksum( URI checksum ) {
+        this.checksum = checksum;
+    }
+
+    public Checksum getChecksumAlgorithm() {
+        return checksumAlgorithm;
+    }
+
+    public void setChecksumAlgorithm( Checksum checksumAlgorithm ) {
+        this.checksumAlgorithm = checksumAlgorithm;
     }
 }

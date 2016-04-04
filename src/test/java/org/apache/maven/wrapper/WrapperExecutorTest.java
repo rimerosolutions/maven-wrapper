@@ -36,6 +36,9 @@ public class WrapperExecutorTest {
                 properties.put("distributionPath", "testDistPath");
                 properties.put("zipStoreBase", "testZipBase");
                 properties.put("zipStorePath", "testZipPath");
+                properties.put("verifyDownload", Boolean.TRUE.toString());
+                properties.put("checksumAlgorithm", Checksum.MD5.toString());
+                properties.put("checksumUrl", "http://server/test/maven.zip.md5");
 
                 writePropertiesFile(properties, propertiesFile, "header");
         }
@@ -50,6 +53,9 @@ public class WrapperExecutorTest {
                 Assert.assertEquals("testDistPath", wrapper.getConfiguration().getDistributionPath());
                 Assert.assertEquals("testZipBase", wrapper.getConfiguration().getZipBase());
                 Assert.assertEquals("testZipPath", wrapper.getConfiguration().getZipPath());
+                Assert.assertTrue(wrapper.getConfiguration().isVerifyDownload());
+                Assert.assertEquals(Checksum.MD5, wrapper.getConfiguration().getChecksumAlgorithm());
+                Assert.assertEquals(URI.create("http://server/test/maven.zip.md5"), wrapper.getConfiguration().getChecksum());
         }
 
         @Test
@@ -62,10 +68,13 @@ public class WrapperExecutorTest {
                 Assert.assertEquals("testDistPath", wrapper.getConfiguration().getDistributionPath());
                 Assert.assertEquals("testZipBase", wrapper.getConfiguration().getZipBase());
                 Assert.assertEquals("testZipPath", wrapper.getConfiguration().getZipPath());
+                Assert.assertTrue(wrapper.getConfiguration().isVerifyDownload());
+                Assert.assertEquals(Checksum.MD5, wrapper.getConfiguration().getChecksumAlgorithm());
+                Assert.assertEquals(URI.create("http://server/test/maven.zip.md5"), wrapper.getConfiguration().getChecksum());
         }
 
         @Test
-        public void useDefaultMetadataNoProeprtiesFile() throws Exception {
+        public void useDefaultMetadataNoPropertiesFile() throws Exception {
                 WrapperExecutor wrapper = WrapperExecutor.forProjectDirectory(new File(testDir, "unknown"), System.out);
 
                 Assert.assertNull(wrapper.getDistribution());
@@ -74,6 +83,9 @@ public class WrapperExecutorTest {
                 Assert.assertEquals(Installer.DEFAULT_DISTRIBUTION_PATH, wrapper.getConfiguration().getDistributionPath());
                 Assert.assertEquals(PathAssembler.MAVEN_USER_HOME_STRING, wrapper.getConfiguration().getZipBase());
                 Assert.assertEquals(Installer.DEFAULT_DISTRIBUTION_PATH, wrapper.getConfiguration().getZipPath());
+                Assert.assertFalse(wrapper.getConfiguration().isVerifyDownload());
+                Assert.assertNull(wrapper.getConfiguration().getChecksumAlgorithm());
+                Assert.assertNull(wrapper.getConfiguration().getChecksum());
         }
 
         @Test
@@ -91,18 +103,21 @@ public class WrapperExecutorTest {
                 Assert.assertEquals(Installer.DEFAULT_DISTRIBUTION_PATH, wrapper.getConfiguration().getDistributionPath());
                 Assert.assertEquals(PathAssembler.MAVEN_USER_HOME_STRING, wrapper.getConfiguration().getZipBase());
                 Assert.assertEquals(Installer.DEFAULT_DISTRIBUTION_PATH, wrapper.getConfiguration().getZipPath());
+                Assert.assertFalse(wrapper.getConfiguration().isVerifyDownload());
+                Assert.assertNull(wrapper.getConfiguration().getChecksumAlgorithm());
+                Assert.assertNull(wrapper.getConfiguration().getChecksum());
         }
 
         @Test
         public void executeInstallAndLaunch() throws Exception {
                 WrapperExecutor wrapper = WrapperExecutor.forProjectDirectory(propertiesFile, System.out);
 
-                wrapper.execute(new String[] { "arg" }, install, start);
+                wrapper.execute(new String[]{"arg"}, install, start);
                 verify(install).createDist(Mockito.any(WrapperConfiguration.class));
-                verify(start).start(new String[] { "arg" }, mockInstallDir);
+                verify(start).start(new String[]{"arg"}, mockInstallDir);
         }
 
-        @Test()
+        @Test
         public void failWhenDistNotSetInProperties() throws Exception {
                 properties = new Properties();
                 writePropertiesFile(properties, propertiesFile, "header");
@@ -132,6 +147,63 @@ public class WrapperExecutorTest {
         }
 
         @Test
+        public void failWhenVerifyDownloadWithoutChecksumUrl() throws Exception {
+                properties = new Properties();
+                properties.put("distributionUrl", "http://server/test/maven.zip");
+                properties.put("verifyDownload", Boolean.TRUE.toString());
+                properties.put("checksumAlgorithm", Checksum.MD5.toString());
+                writePropertiesFile(properties, propertiesFile, "header");
+
+                try {
+                        WrapperExecutor.forWrapperPropertiesFile(propertiesFile, System.out);
+                        Assert.fail("Expected RuntimeException");
+                }
+                catch (RuntimeException e) {
+                        Assert.assertEquals("Could not load wrapper properties from '" + propertiesFile + "'.", e.getMessage());
+                        Assert.assertEquals("No value with key 'checksumUrl' specified in wrapper properties file '"
+                                + propertiesFile + "'.", e.getCause().getMessage());
+                }
+        }
+
+        @Test
+        public void failWhenVerifyDownloadWithoutAlgorithm() throws Exception {
+                properties = new Properties();
+                properties.put("distributionUrl", "http://server/test/maven.zip");
+                properties.put("verifyDownload", Boolean.TRUE.toString());
+                properties.put("checksumUrl", "http://server/test/maven.md5");
+                writePropertiesFile(properties, propertiesFile, "header");
+
+                try {
+                        WrapperExecutor.forWrapperPropertiesFile(propertiesFile, System.out);
+                        Assert.fail("Expected RuntimeException");
+                }
+                catch (RuntimeException e) {
+                        Assert.assertEquals("Could not load wrapper properties from '" + propertiesFile + "'.", e.getMessage());
+                        Assert.assertEquals("No value with key 'checksumAlgorithm' specified in wrapper properties file '"
+                                + propertiesFile + "'.", e.getCause().getMessage());
+                }
+        }
+
+        @Test
+        public void failWhenVerifyDownloadWithInvalidAlgorithm() throws Exception {
+                properties = new Properties();
+                properties.put("distributionUrl", "http://server/test/maven.zip");
+                properties.put("verifyDownload", Boolean.TRUE.toString());
+                properties.put("checksumAlgorithm", "FOO_BAR");
+                properties.put("checksumExtension", "md5");
+                writePropertiesFile(properties, propertiesFile, "header");
+
+                try {
+                        WrapperExecutor.forWrapperPropertiesFile(propertiesFile, System.out);
+                        Assert.fail("Expected RuntimeException");
+                }
+                catch (RuntimeException e) {
+                        Assert.assertEquals("Could not load wrapper properties from '" + propertiesFile + "'.", e.getMessage());
+                        Assert.assertEquals("No enum constant org.apache.maven.wrapper.Checksum.FOO_BAR", e.getCause().getMessage());
+                }
+        }
+
+        @Test
         public void testRelativeDistUrl() throws Exception {
                 properties = new Properties();
                 properties.put("distributionUrl", "some/relative/url/to/bin.zip");
@@ -140,6 +212,20 @@ public class WrapperExecutorTest {
                 WrapperExecutor wrapper = WrapperExecutor.forWrapperPropertiesFile(propertiesFile, System.out);
                 Assert.assertNotEquals("some/relative/url/to/bin.zip", wrapper.getDistribution().getSchemeSpecificPart());
                 Assert.assertTrue(wrapper.getDistribution().getSchemeSpecificPart().endsWith("some/relative/url/to/bin.zip"));
+        }
+
+        @Test
+        public void testRelativeChecksumUrl() throws Exception {
+                properties = new Properties();
+                properties.put("distributionUrl", "http://server/test/maven.zip");
+                properties.put("verifyDownload", Boolean.TRUE.toString());
+                properties.put("checksumUrl", "some/relative/url/to/bin.md5");
+                properties.put("checksumAlgorithm", Checksum.MD5.toString());
+                writePropertiesFile(properties, propertiesFile, "header");
+
+                WrapperExecutor wrapper = WrapperExecutor.forWrapperPropertiesFile(propertiesFile, System.out);
+                Assert.assertNotEquals("some/relative/url/to/bin.md5", wrapper.getConfiguration().getChecksum().getSchemeSpecificPart());
+                Assert.assertTrue(wrapper.getConfiguration().getChecksum().getSchemeSpecificPart().endsWith("some/relative/url/to/bin.md5"));
         }
 
         private void writePropertiesFile(Properties properties, File propertiesFile, String message) throws Exception {

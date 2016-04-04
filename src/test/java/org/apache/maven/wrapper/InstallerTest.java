@@ -1,5 +1,8 @@
 package org.apache.maven.wrapper;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -16,6 +19,8 @@ import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 /**
  * @author Hans Dockter
@@ -31,10 +36,13 @@ public class InstallerTest {
         private File zipStore;
         private File mavenHomeDir;
         private File zipDestination;
+        private File checksumDestination;
         private WrapperConfiguration configuration = new WrapperConfiguration();
         private Downloader download;
         private PathAssembler pathAssembler;
         private PathAssembler.LocalDistribution localDistribution;
+        private static URI DISTRIBUTION_URI = URI.create("http://server/maven-0.9.zip");
+        private static URI CHECKSUM_URI = URI.create("http://server/maven-0.9.zip.sha1");
 
         @Before
         public void setup() throws Exception {
@@ -45,18 +53,35 @@ public class InstallerTest {
                 configuration.setZipPath("someZipPath");
                 configuration.setDistributionBase(PathAssembler.MAVEN_USER_HOME_STRING);
                 configuration.setDistributionPath("someDistPath");
-                configuration.setDistribution(new URI("http://server/maven-0.9.zip"));
+                configuration.setDistribution(DISTRIBUTION_URI);
                 configuration.setAlwaysDownload(false);
                 configuration.setAlwaysUnpack(false);
                 distributionDir = new File(testDir, "someDistPath");
                 mavenHomeDir = new File(distributionDir, "maven-0.9");
                 zipStore = new File(testDir, "zips");
                 zipDestination = new File(zipStore, "maven-0.9.zip");
+                checksumDestination = new File(zipStore, "maven-0.9.zip.checksum");
 
                 download = mock(Downloader.class);
                 pathAssembler = mock(PathAssembler.class);
                 localDistribution = mock(PathAssembler.LocalDistribution.class);
 
+                doAnswer(new Answer<Void>() {
+                        @Override
+                        public Void answer(final InvocationOnMock invocationOnMock) throws Throwable {
+                                File downloadTarget = (File) invocationOnMock.getArguments()[1];
+                                FileUtils.copyFile(zipDestination, downloadTarget);
+                                return null;
+                        }
+                }).when(download).download(eq(DISTRIBUTION_URI), any(File.class));
+                doAnswer(new Answer<Void>() {
+                        @Override
+                        public Void answer(final InvocationOnMock invocationOnMock) throws Throwable {
+                                File downloadTarget = (File) invocationOnMock.getArguments()[1];
+                                FileUtils.copyFile(checksumDestination, downloadTarget);
+                                return null;
+                        }
+                }).when(download).download(eq(CHECKSUM_URI), any(File.class));
                 when(localDistribution.getZipFile()).thenReturn(zipDestination);
                 when(localDistribution.getDistributionDir()).thenReturn(distributionDir);
                 when(pathAssembler.getDistribution(configuration)).thenReturn(localDistribution);
@@ -73,6 +98,10 @@ public class InstallerTest {
                 FileUtils.write(mavenScript, "something");
 
                 zipTo(explodedZipDir, zipDestination);
+        }
+
+        private void createChecksum(final File checksumDestination, final String checksum) throws Exception {
+                FileUtils.write(checksumDestination, checksum);
         }
 
         public void testCreateDist() throws Exception {
@@ -151,6 +180,56 @@ public class InstallerTest {
 
                 // download.download(new URI("http://some/test"), distributionDir);
                 // verify(download).download(new URI("http://some/test"), distributionDir);
+        }
+
+        @Test
+        public void testVerifyDownload() throws Exception {
+                configuration.setAlwaysDownload(true);
+                configuration.setVerifyDownload(true);
+                configuration.setChecksum(CHECKSUM_URI);
+                configuration.setChecksumAlgorithm(Checksum.SHA1);
+
+                createTestZip(zipDestination);
+                createChecksum(checksumDestination, Checksum.SHA1.generate(new FileInputStream(zipDestination)));
+                mavenHomeDir.mkdirs();
+                File garbage = new File(mavenHomeDir, "garbage");
+                FileUtils.touch(garbage);
+                configuration.setAlwaysUnpack(true);
+
+                File homeDir = install.createDist(configuration);
+
+                Assert.assertEquals(mavenHomeDir, homeDir);
+                Assert.assertTrue(mavenHomeDir.isDirectory());
+                Assert.assertTrue(new File(homeDir, "bin/mvn").exists());
+                Assert.assertFalse(new File(homeDir, "garbage").exists());
+                Assert.assertTrue(zipDestination.exists());
+
+                Assert.assertEquals(localDistribution, pathAssembler.getDistribution(configuration));
+                Assert.assertEquals(distributionDir, localDistribution.getDistributionDir());
+                Assert.assertEquals(zipDestination, localDistribution.getZipFile());
+        }
+
+        @Test
+        public void testVerifyDownloadFails() throws Exception {
+                configuration.setAlwaysDownload(true);
+                configuration.setVerifyDownload(true);
+                configuration.setChecksum(CHECKSUM_URI);
+                configuration.setChecksumAlgorithm(Checksum.SHA1);
+
+                createTestZip(zipDestination);
+                createChecksum(checksumDestination, "Foo-Bar");
+                mavenHomeDir.mkdirs();
+                File garbage = new File(mavenHomeDir, "garbage");
+                FileUtils.touch(garbage);
+                configuration.setAlwaysUnpack(true);
+
+                try {
+                        install.createDist(configuration);
+                        Assert.fail("Expected RuntimeException");
+                }
+                catch (final RuntimeException e) {
+                        Assert.assertEquals("Maven distribution '" + DISTRIBUTION_URI.toString() + "' failed to verify against '" + CHECKSUM_URI.toString() + "'.", e.getMessage());
+                }
         }
 
         private static void zipTo(File directoryToZip, File destFile) throws IOException {

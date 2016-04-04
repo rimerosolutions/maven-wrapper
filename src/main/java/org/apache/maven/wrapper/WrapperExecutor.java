@@ -38,6 +38,12 @@ public class WrapperExecutor
 
     public static final String ZIP_STORE_PATH_PROPERTY = "zipStorePath";
 
+    public static final String VERIFY_DOWNLOAD_PROPERTY = "verifyDownload";
+
+    public static final String CHECKSUM_ALGORITHM_PROPERTY = "checksumAlgorithm";
+
+    public static final String CHECKSUM_URL_PROPERTY = "checksumUrl";
+
     private final Properties properties;
 
     private final File propertiesFile;
@@ -76,6 +82,11 @@ public class WrapperExecutor
                 config.setDistributionPath( getProperty( DISTRIBUTION_PATH_PROPERTY, config.getDistributionPath() ) );
                 config.setZipBase( getProperty( ZIP_STORE_BASE_PROPERTY, config.getZipBase() ) );
                 config.setZipPath( getProperty( ZIP_STORE_PATH_PROPERTY, config.getZipPath() ) );
+                config.setVerifyDownload( Boolean.valueOf( getProperty( VERIFY_DOWNLOAD_PROPERTY, Boolean.FALSE.toString() ) ) );
+                if ( config.isVerifyDownload() ) {
+                    config.setChecksumAlgorithm( Checksum.valueOf( getProperty( CHECKSUM_ALGORITHM_PROPERTY ) ) );
+                    config.setChecksum( prepareChecksumUri() );
+                }
             }
             catch ( Exception e )
             {
@@ -109,6 +120,33 @@ public class WrapperExecutor
         }
 
         reportMissingProperty( DISTRIBUTION_URL_PROPERTY );
+        return null; // previous line will fail
+    }
+
+    private URI prepareChecksumUri()
+            throws URISyntaxException
+    {
+        URI source = readChecksumUrl();
+        if ( source.getScheme() == null )
+        {
+            // no scheme means someone passed a relative url. In our context only file relative urls make sense.
+            return new File( propertiesFile.getParentFile(), source.getSchemeSpecificPart() ).toURI();
+        }
+        else
+        {
+            return source;
+        }
+    }
+
+    private URI readChecksumUrl()
+            throws URISyntaxException
+    {
+        if ( properties.getProperty( CHECKSUM_URL_PROPERTY ) != null )
+        {
+            return new URI( getProperty( CHECKSUM_URL_PROPERTY ) );
+        }
+
+        reportMissingProperty( CHECKSUM_URL_PROPERTY );
         return null; // previous line will fail
     }
 
