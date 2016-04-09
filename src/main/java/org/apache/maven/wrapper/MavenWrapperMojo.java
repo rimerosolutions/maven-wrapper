@@ -56,9 +56,13 @@ import org.codehaus.plexus.personality.plexus.lifecycle.phase.Contextualizable;
 public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
 
         public static final String DIST_FILENAME_PATH_TEMPLATE = "%s/apache-maven-%s-bin.zip";
+        public static final String CHECKSUM_FILENAME_PATH_TEMPLATE = "%s/apache-maven-%s-bin.zip.%s";
         public static final String WRAPPER_PROPERTIES_FILE_NAME = "maven-wrapper.properties";
         public static final String WRAPPER_JAR_FILE_NAME = "maven-wrapper.jar";
         public static final String DISTRIBUTION_URL_PROPERTY = "distributionUrl";
+        public static final String VERIFY_DOWNLOAD_PROPERTY = "verifyDownload";
+        public static final String CHECKSUM_URL_PROPERTY = "checksumUrl";
+        public static final String CHECKSUM_ALGORITHM_PROPERTY = "checksumAlgorithm";
         public static final String SCRIPT_FILENAME_WINDOWS = "mvnw.bat";
         public static final String SCRIPT_FILENAME_UNIX = "mvnw";
 
@@ -95,6 +99,18 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
         @Parameter(property = "mavenVersion", required = false)
         /** The Maven version to use for the generate wrapper */
         private String mavenVersion;
+
+        @Parameter(property = "verifyDownload", defaultValue = "false")
+        /** Whether to verify the download using a checksum. */
+        private Boolean verifyDownload;
+
+        @Parameter(property = "checksumExtension", required = false)
+        /** The checksum file extension. */
+        private String checksumExtension;
+
+        @Parameter(property = "checksumAlgorithm", defaultValue = "SHA-1")
+        /** The checksum algorithm. */
+        private String checksumAlgorithm;
 
         /**
          * Sets the plugin descriptor (Exposed for unit tests)
@@ -148,6 +164,33 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
          */
         protected String getBaseDistributionUrl() {
                 return this.baseDistributionUrl;
+        }
+
+        /**
+         * Returns the checksum extension (Exposed for unit tests only)
+         *
+         * @return the checksum extension
+         */
+        protected String getChecksumExtension() {
+                return this.checksumExtension;
+        }
+
+        /**
+         * Returns the checksum algorithm (Exposed for unit tests only)
+         *
+         * @return the checksum algorithm
+         */
+        protected String getChecksumAlgorithm() {
+                return this.checksumAlgorithm;
+        }
+
+        /**
+         * Returns whether to verify the download (Exposed for unit tests only)
+         *
+         * @return true if and only if the download should be verified
+         */
+        protected Boolean getVerifyDownload() {
+                return this.verifyDownload;
         }
 
         public void contextualize(Context context) throws ContextException {
@@ -254,17 +297,30 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
                 }
         }
 
-        private void generateWrapperProperties(File wrapperSupportFolder, Artifact pluginArtifact) throws IOException {
+        private void generateWrapperProperties(File wrapperSupportFolder, Artifact pluginArtifact) throws MojoExecutionException, IOException {
                 Properties props = new Properties();
-                StringBuilder sb = new StringBuilder(baseDistributionUrl);
+                StringBuilder distsb = new StringBuilder(baseDistributionUrl);
+                StringBuilder checksumsb = new StringBuilder(baseDistributionUrl);
 
                 if (!baseDistributionUrl.endsWith("/")) {
-                        sb.append('/');
+                        distsb.append('/');
+                        checksumsb.append('/');
                 }
 
-                sb.append(DIST_FILENAME_PATH_TEMPLATE);
+                distsb.append(DIST_FILENAME_PATH_TEMPLATE);
+                checksumsb.append(CHECKSUM_FILENAME_PATH_TEMPLATE);
 
-                props.put(DISTRIBUTION_URL_PROPERTY, String.format(sb.toString(), mavenVersion, mavenVersion));
+                props.put(DISTRIBUTION_URL_PROPERTY, String.format(distsb.toString(), mavenVersion, mavenVersion));
+                props.put(VERIFY_DOWNLOAD_PROPERTY, verifyDownload.toString());
+                if (verifyDownload) {
+                        Checksum checksum = Checksum.fromAlias(checksumAlgorithm);
+                        String resolvedChecksumExtension = checksumExtension == null ? checksum.getDefaultExtension() : checksumExtension;
+                        if (checksum == null) {
+                                throw new MojoExecutionException(String.format("Unsupported checksum algorithm: %s", checksumAlgorithm));
+                        }
+                        props.put(CHECKSUM_ALGORITHM_PROPERTY, checksum.toString());
+                        props.put(CHECKSUM_URL_PROPERTY, String.format(checksumsb.toString(), mavenVersion, mavenVersion, resolvedChecksumExtension));
+                }
                 File file = new File(wrapperSupportFolder, WRAPPER_PROPERTIES_FILE_NAME);
 
                 FileOutputStream fileOut = null;

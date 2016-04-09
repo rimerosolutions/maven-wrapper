@@ -20,6 +20,12 @@
                                         <wrapperDirectory>${basedir}/target/test-wrapper/support</wrapperDirectory>
                                         <!-- optional specific maven version -->
                                         <mavenVersion>0.0.1</mavenVersion>
+                                        <!-- optional verify download -->
+                                        <verifyDownload>true</verifyDownload>
+                                        <!-- optional checksum file extension -->
+                                        <checksumExtension>md5</checksumExtension>
+                                        <!-- optional checksum algorithm -->
+                                        <checksumAlgorithm>MD5</checksumAlgorithm>
                                 </configuration>
                         </plugin>
 
