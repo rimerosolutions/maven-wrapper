@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -96,57 +98,37 @@ public class WrapperExecutor
         }
     }
 
-    private URI prepareDistributionUri()
+    private List<URI> prepareDistributionUri()
         throws URISyntaxException
     {
-        URI source = readDistroUrl();
-        if ( source.getScheme() == null )
-        {
-            // no scheme means someone passed a relative url. In our context only file relative urls make sense.
-            return new File( propertiesFile.getParentFile(), source.getSchemeSpecificPart() ).toURI();
-        }
-        else
-        {
-            return source;
-        }
+        return readRequiredUriList( DISTRIBUTION_URL_PROPERTY );
     }
 
-    private URI readDistroUrl()
+    private List<URI> prepareChecksumUri()
+            throws URISyntaxException
+    {
+        return readRequiredUriList( CHECKSUM_URL_PROPERTY );
+    }
+
+    private List<URI> readRequiredUriList( String key )
         throws URISyntaxException
     {
-        if ( properties.getProperty( DISTRIBUTION_URL_PROPERTY ) != null )
+        List<URI> list = new ArrayList<URI>();
+        if ( properties.getProperty( key ) != null )
         {
-            return new URI( getProperty( DISTRIBUTION_URL_PROPERTY ) );
+            for ( String value : getProperty( key ).split( "," ) )
+            {
+                URI uri = new URI( value );
+                if ( uri.getScheme() == null )
+                {
+                    uri = new File( propertiesFile.getParentFile(), uri.getSchemeSpecificPart() ).toURI();
+                }
+                list.add( uri );
+            }
+            return list;
         }
 
-        reportMissingProperty( DISTRIBUTION_URL_PROPERTY );
-        return null; // previous line will fail
-    }
-
-    private URI prepareChecksumUri()
-            throws URISyntaxException
-    {
-        URI source = readChecksumUrl();
-        if ( source.getScheme() == null )
-        {
-            // no scheme means someone passed a relative url. In our context only file relative urls make sense.
-            return new File( propertiesFile.getParentFile(), source.getSchemeSpecificPart() ).toURI();
-        }
-        else
-        {
-            return source;
-        }
-    }
-
-    private URI readChecksumUrl()
-            throws URISyntaxException
-    {
-        if ( properties.getProperty( CHECKSUM_URL_PROPERTY ) != null )
-        {
-            return new URI( getProperty( CHECKSUM_URL_PROPERTY ) );
-        }
-
-        reportMissingProperty( CHECKSUM_URL_PROPERTY );
+        reportMissingProperty( key );
         return null; // previous line will fail
     }
 
@@ -168,7 +150,7 @@ public class WrapperExecutor
      * Returns the distribution which this wrapper will use. Returns null if no wrapper meta-data was found in the
      * specified project directory.
      */
-    public URI getDistribution()
+    public List<URI> getDistribution()
     {
         return config.getDistribution();
     }

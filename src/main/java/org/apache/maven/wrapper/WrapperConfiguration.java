@@ -16,6 +16,7 @@
 package org.apache.maven.wrapper;
 
 import java.net.URI;
+import java.util.List;
 
 public class WrapperConfiguration
 {
@@ -27,7 +28,7 @@ public class WrapperConfiguration
 
     private boolean alwaysDownload = Boolean.parseBoolean( System.getenv( ALWAYS_DOWNLOAD_ENV ) );
 
-    private URI distribution;
+    private List<URI> distribution;
 
     private String distributionBase = PathAssembler.MAVEN_USER_HOME_STRING;
 
@@ -39,7 +40,7 @@ public class WrapperConfiguration
 
     private boolean verifyDownload = false;
 
-    private URI checksum = null;
+    private List<URI> checksum = null;
 
     private Checksum checksumAlgorithm = null;
 
@@ -63,12 +64,12 @@ public class WrapperConfiguration
         this.alwaysUnpack = alwaysUnpack;
     }
 
-    public URI getDistribution()
+    public List<URI> getDistribution()
     {
         return distribution;
     }
 
-    public void setDistribution( URI distribution )
+    public void setDistribution( List<URI> distribution )
     {
         this.distribution = distribution;
     }
@@ -121,11 +122,11 @@ public class WrapperConfiguration
         this.verifyDownload = verifyDownload;
     }
 
-    public URI getChecksum() {
+    public List<URI> getChecksum() {
         return checksum;
     }
 
-    public void setChecksum( URI checksum ) {
+    public void setChecksum( List<URI> checksum ) {
         this.checksum = checksum;
     }
 

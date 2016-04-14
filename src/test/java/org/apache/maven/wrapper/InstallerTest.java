@@ -1,9 +1,12 @@
 package org.apache.maven.wrapper;
 
+import static org.mockito.AdditionalMatchers.or;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
@@ -12,6 +15,8 @@ import java.io.InputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -41,7 +46,8 @@ public class InstallerTest {
         private Downloader download;
         private PathAssembler pathAssembler;
         private PathAssembler.LocalDistribution localDistribution;
-        private static URI DISTRIBUTION_URI = URI.create("http://server/maven-0.9.zip");
+        private static URI WORKING_DISTRIBUTION_URI = URI.create("http://server/maven-0.9.zip");
+        private static URI BROKEN_DISTRIBUTION_URI = URI.create("http://server.down/maven-0.9.zip");
         private static URI CHECKSUM_URI = URI.create("http://server/maven-0.9.zip.sha1");
 
         @Before
@@ -53,7 +59,7 @@ public class InstallerTest {
                 configuration.setZipPath("someZipPath");
                 configuration.setDistributionBase(PathAssembler.MAVEN_USER_HOME_STRING);
                 configuration.setDistributionPath("someDistPath");
-                configuration.setDistribution(DISTRIBUTION_URI);
+                configuration.setDistribution(Collections.singletonList(WORKING_DISTRIBUTION_URI));
                 configuration.setAlwaysDownload(false);
                 configuration.setAlwaysUnpack(false);
                 distributionDir = new File(testDir, "someDistPath");
@@ -73,7 +79,16 @@ public class InstallerTest {
                                 FileUtils.copyFile(zipDestination, downloadTarget);
                                 return null;
                         }
-                }).when(download).download(eq(DISTRIBUTION_URI), any(File.class));
+                }).when(download).download(eq(WORKING_DISTRIBUTION_URI), any(File.class));
+
+                doAnswer(new Answer<Void>() {
+                        @Override
+                        public Void answer(final InvocationOnMock invocationOnMock) throws Throwable {
+                                URI address = (URI) invocationOnMock.getArguments()[0];
+                                throw new IOException("Connection refused to '" + address + "'.");
+                        }
+                }).when(download).download(eq(BROKEN_DISTRIBUTION_URI), any(File.class));
+
                 doAnswer(new Answer<Void>() {
                         @Override
                         public Void answer(final InvocationOnMock invocationOnMock) throws Throwable {
@@ -84,7 +99,8 @@ public class InstallerTest {
                 }).when(download).download(eq(CHECKSUM_URI), any(File.class));
                 when(localDistribution.getZipFile()).thenReturn(zipDestination);
                 when(localDistribution.getDistributionDir()).thenReturn(distributionDir);
-                when(pathAssembler.getDistribution(configuration)).thenReturn(localDistribution);
+                when(pathAssembler.getDistribution(configuration, WORKING_DISTRIBUTION_URI)).thenReturn(localDistribution);
+                when(pathAssembler.getDistribution(configuration, BROKEN_DISTRIBUTION_URI)).thenReturn(localDistribution);
 
                 install = new Installer(download, pathAssembler);
         }
@@ -112,7 +128,8 @@ public class InstallerTest {
                 Assert.assertTrue(new File(homeDir, "bin/mvn").exists());
                 Assert.assertTrue(zipDestination.exists());
 
-                Assert.assertEquals(localDistribution, pathAssembler.getDistribution(configuration));
+                Assert.assertEquals(localDistribution, pathAssembler.getDistribution(configuration,
+                        WORKING_DISTRIBUTION_URI));
                 Assert.assertEquals(distributionDir, localDistribution.getDistributionDir());
                 Assert.assertEquals(zipDestination, localDistribution.getZipFile());
 
@@ -134,7 +151,8 @@ public class InstallerTest {
                 Assert.assertTrue(new File(homeDir, "some-file").exists());
                 Assert.assertTrue(zipDestination.exists());
 
-                Assert.assertEquals(localDistribution, pathAssembler.getDistribution(configuration));
+                Assert.assertEquals(localDistribution, pathAssembler.getDistribution(configuration,
+                        WORKING_DISTRIBUTION_URI));
                 Assert.assertEquals(distributionDir, localDistribution.getDistributionDir());
                 Assert.assertEquals(zipDestination, localDistribution.getZipFile());
         }
@@ -154,7 +172,8 @@ public class InstallerTest {
                 Assert.assertFalse(new File(homeDir, "garbage").exists());
                 Assert.assertTrue(zipDestination.exists());
 
-                Assert.assertEquals(localDistribution, pathAssembler.getDistribution(configuration));
+                Assert.assertEquals(localDistribution, pathAssembler.getDistribution(configuration,
+                        WORKING_DISTRIBUTION_URI));
                 Assert.assertEquals(distributionDir, localDistribution.getDistributionDir());
                 Assert.assertEquals(zipDestination, localDistribution.getZipFile());
         }
@@ -174,7 +193,8 @@ public class InstallerTest {
                 Assert.assertFalse(new File(homeDir, "garbage").exists());
                 Assert.assertTrue(zipDestination.exists());
 
-                Assert.assertEquals(localDistribution, pathAssembler.getDistribution(configuration));
+                Assert.assertEquals(localDistribution, pathAssembler.getDistribution(configuration,
+                        WORKING_DISTRIBUTION_URI));
                 Assert.assertEquals(distributionDir, localDistribution.getDistributionDir());
                 Assert.assertEquals(zipDestination, localDistribution.getZipFile());
 
@@ -186,7 +206,7 @@ public class InstallerTest {
         public void testVerifyDownload() throws Exception {
                 configuration.setAlwaysDownload(true);
                 configuration.setVerifyDownload(true);
-                configuration.setChecksum(CHECKSUM_URI);
+                configuration.setChecksum(Collections.singletonList(CHECKSUM_URI));
                 configuration.setChecksumAlgorithm(Checksum.SHA1);
 
                 createTestZip(zipDestination);
@@ -204,7 +224,8 @@ public class InstallerTest {
                 Assert.assertFalse(new File(homeDir, "garbage").exists());
                 Assert.assertTrue(zipDestination.exists());
 
-                Assert.assertEquals(localDistribution, pathAssembler.getDistribution(configuration));
+                Assert.assertEquals(localDistribution, pathAssembler.getDistribution(configuration,
+                        WORKING_DISTRIBUTION_URI));
                 Assert.assertEquals(distributionDir, localDistribution.getDistributionDir());
                 Assert.assertEquals(zipDestination, localDistribution.getZipFile());
         }
@@ -213,7 +234,7 @@ public class InstallerTest {
         public void testVerifyDownloadFails() throws Exception {
                 configuration.setAlwaysDownload(true);
                 configuration.setVerifyDownload(true);
-                configuration.setChecksum(CHECKSUM_URI);
+                configuration.setChecksum(Collections.singletonList(CHECKSUM_URI));
                 configuration.setChecksumAlgorithm(Checksum.SHA1);
 
                 createTestZip(zipDestination);
@@ -228,8 +249,92 @@ public class InstallerTest {
                         Assert.fail("Expected RuntimeException");
                 }
                 catch (final RuntimeException e) {
-                        Assert.assertEquals("Maven distribution '" + DISTRIBUTION_URI.toString() + "' failed to verify against '" + CHECKSUM_URI.toString() + "'.", e.getMessage());
+                        Assert.assertEquals("Maven distribution '" + WORKING_DISTRIBUTION_URI.toString() + "' failed to verify against '" + CHECKSUM_URI.toString() + "'.", e.getMessage());
                 }
+        }
+
+        @Test
+        public void testMultipleDistributionsFirstSucceeds() throws Exception {
+                configuration.setAlwaysDownload(true);
+                configuration.setDistribution(Arrays.asList(
+                        WORKING_DISTRIBUTION_URI,
+                        BROKEN_DISTRIBUTION_URI));
+
+                createTestZip(zipDestination);
+                mavenHomeDir.mkdirs();
+                File garbage = new File(mavenHomeDir, "garbage");
+                FileUtils.touch(garbage);
+                configuration.setAlwaysUnpack(true);
+
+                File homeDir = install.createDist(configuration);
+
+                Assert.assertEquals(mavenHomeDir, homeDir);
+                Assert.assertTrue(mavenHomeDir.isDirectory());
+                Assert.assertTrue(new File(homeDir, "bin/mvn").exists());
+                Assert.assertFalse(new File(homeDir, "garbage").exists());
+                Assert.assertTrue(zipDestination.exists());
+
+                Assert.assertEquals(localDistribution, pathAssembler.getDistribution(configuration,
+                        WORKING_DISTRIBUTION_URI));
+                Assert.assertEquals(distributionDir, localDistribution.getDistributionDir());
+                Assert.assertEquals(zipDestination, localDistribution.getZipFile());
+
+                verify(download).download(eq(WORKING_DISTRIBUTION_URI), any(File.class));
+        }
+
+        @Test
+        public void testMultipleDistributionsFirstFail() throws Exception {
+                configuration.setAlwaysDownload(true);
+                configuration.setDistribution(Arrays.asList(
+                        BROKEN_DISTRIBUTION_URI,
+                        WORKING_DISTRIBUTION_URI));
+
+                createTestZip(zipDestination);
+                mavenHomeDir.mkdirs();
+                File garbage = new File(mavenHomeDir, "garbage");
+                FileUtils.touch(garbage);
+                configuration.setAlwaysUnpack(true);
+
+                File homeDir = install.createDist(configuration);
+
+                Assert.assertEquals(mavenHomeDir, homeDir);
+                Assert.assertTrue(mavenHomeDir.isDirectory());
+                Assert.assertTrue(new File(homeDir, "bin/mvn").exists());
+                Assert.assertFalse(new File(homeDir, "garbage").exists());
+                Assert.assertTrue(zipDestination.exists());
+
+                Assert.assertEquals(localDistribution, pathAssembler.getDistribution(configuration,
+                        WORKING_DISTRIBUTION_URI));
+                Assert.assertEquals(distributionDir, localDistribution.getDistributionDir());
+                Assert.assertEquals(zipDestination, localDistribution.getZipFile());
+
+                verify(download, times(2)).download(or(eq(BROKEN_DISTRIBUTION_URI), eq(WORKING_DISTRIBUTION_URI)), any(File.class));
+        }
+
+        @Test
+        public void testMultipleDistributionsBothFail() throws Exception {
+                configuration.setAlwaysDownload(true);
+                configuration.setDistribution(Arrays.asList(
+                        BROKEN_DISTRIBUTION_URI,
+                        BROKEN_DISTRIBUTION_URI));
+
+                createTestZip(zipDestination);
+                mavenHomeDir.mkdirs();
+                File garbage = new File(mavenHomeDir, "garbage");
+                FileUtils.touch(garbage);
+                configuration.setAlwaysUnpack(true);
+
+                try {
+                        install.createDist(configuration);
+                        Assert.fail("Expected RuntimeException");
+                }
+                catch (final IOException e) {
+                        Assert.assertEquals("Connection refused to '" + BROKEN_DISTRIBUTION_URI + "'.", e.getMessage());
+                        Assert.assertEquals(1, e.getSuppressed().length);
+                        Assert.assertEquals("Connection refused to '" + BROKEN_DISTRIBUTION_URI + "'.", e.getSuppressed()[0].getMessage());
+                }
+
+                verify(download, times(2)).download(eq(BROKEN_DISTRIBUTION_URI), any(File.class));
         }
 
         private static void zipTo(File directoryToZip, File destFile) throws IOException {

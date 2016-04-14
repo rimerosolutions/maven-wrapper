@@ -26,8 +26,10 @@ import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.maven.artifact.Artifact;
@@ -66,6 +68,7 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
         public static final String SCRIPT_FILENAME_WINDOWS = "mvnw.bat";
         public static final String SCRIPT_FILENAME_UNIX = "mvnw";
 
+        private static final String DEFAULT_BASE_DISTRIBUTION_URL = "https://repository.apache.org/content/repositories/releases/org/apache/maven/apache-maven";
         private static final String WRAPPER_TEMPLATES_LOCATION = "com/rimerosolutions/maven/plugins/wrapper/";
         private static final String WRAPPER_PROPERTIES_COMMENTS = "Maven download properties";
         private static final String ENCODING_UTF8 = "UTF-8";
@@ -84,9 +87,13 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
         @Component
         private PluginDescriptor plugin;
 
-        @Parameter(property = "baseDistributionUrl", defaultValue = "https://repository.apache.org/content/repositories/releases/org/apache/maven/apache-maven")
-        /** Base distribution URL for the Maven binaries download. */
+        @Parameter(property = "baseDistributionUrl", defaultValue = DEFAULT_BASE_DISTRIBUTION_URL)
+        /** DEPRECATED: Base distribution URL for the Maven binaries download. Use baseDistributionUrlList instead. */
         private String baseDistributionUrl;
+
+        @Parameter(property = "baseDistributionUrlList", required = false)
+        /** List of base distribution URLs for the Maven binaries download. Default is: https://repository.apache.org/content/repositories/releases/org/apache/maven/apache-maven */
+        private List<String> baseDistributionUrlList;
 
         @Parameter(property = "wrapperScriptDirectory", defaultValue = "${basedir}")
         /** The wrapper scripts folder for Windows/Unix */
@@ -164,6 +171,15 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
          */
         protected String getBaseDistributionUrl() {
                 return this.baseDistributionUrl;
+        }
+
+        /**
+         * Returns the wrapper base distribution URL list (Exposed for unit tests only)
+         *
+         * @return the wrapper base distribution URL list
+         */
+        protected List<String> getBaseDistributionUrlList() {
+                return this.baseDistributionUrlList;
         }
 
         /**
@@ -298,29 +314,53 @@ public class MavenWrapperMojo extends AbstractMojo implements Contextualizable {
         }
 
         private void generateWrapperProperties(File wrapperSupportFolder, Artifact pluginArtifact) throws MojoExecutionException, IOException {
-                Properties props = new Properties();
-                StringBuilder distsb = new StringBuilder(baseDistributionUrl);
-                StringBuilder checksumsb = new StringBuilder(baseDistributionUrl);
-
-                if (!baseDistributionUrl.endsWith("/")) {
-                        distsb.append('/');
-                        checksumsb.append('/');
+                List<String> effectiveBaseDistributionUrls;
+                if (baseDistributionUrlList == null) {
+                        effectiveBaseDistributionUrls = Collections.singletonList(baseDistributionUrl);
+                } else if (baseDistributionUrlList.isEmpty()) {
+                        effectiveBaseDistributionUrls = Collections.singletonList(DEFAULT_BASE_DISTRIBUTION_URL);
+                } else {
+                        effectiveBaseDistributionUrls = baseDistributionUrlList;
                 }
 
-                distsb.append(DIST_FILENAME_PATH_TEMPLATE);
-                checksumsb.append(CHECKSUM_FILENAME_PATH_TEMPLATE);
+                Properties props = new Properties();
 
-                props.put(DISTRIBUTION_URL_PROPERTY, String.format(distsb.toString(), mavenVersion, mavenVersion));
+                String resolvedChecksumExtension = "";
                 props.put(VERIFY_DOWNLOAD_PROPERTY, verifyDownload.toString());
                 if (verifyDownload) {
                         Checksum checksum = Checksum.fromAlias(checksumAlgorithm);
-                        String resolvedChecksumExtension = checksumExtension == null ? checksum.getDefaultExtension() : checksumExtension;
                         if (checksum == null) {
                                 throw new MojoExecutionException(String.format("Unsupported checksum algorithm: %s", checksumAlgorithm));
                         }
+                        resolvedChecksumExtension = checksumExtension == null ? checksum.getDefaultExtension() : checksumExtension;
                         props.put(CHECKSUM_ALGORITHM_PROPERTY, checksum.toString());
-                        props.put(CHECKSUM_URL_PROPERTY, String.format(checksumsb.toString(), mavenVersion, mavenVersion, resolvedChecksumExtension));
                 }
+
+                StringBuilder distlistsb = new StringBuilder();
+                StringBuilder checksumlistsb = new StringBuilder();
+                for (final String effectiveBaseDistributionUrl : effectiveBaseDistributionUrls) {
+                        distlistsb.append(effectiveBaseDistributionUrl);
+                        checksumlistsb.append(effectiveBaseDistributionUrl);
+
+                        if (!effectiveBaseDistributionUrl.endsWith("/")) {
+                                distlistsb.append('/');
+                                checksumlistsb.append('/');
+                        }
+
+                        distlistsb.append(String.format(DIST_FILENAME_PATH_TEMPLATE, mavenVersion, mavenVersion));
+                        checksumlistsb.append(String.format(CHECKSUM_FILENAME_PATH_TEMPLATE, mavenVersion, mavenVersion, resolvedChecksumExtension));
+
+                        distlistsb.append(",");
+                        checksumlistsb.append(",");
+                }
+                distlistsb.setLength(distlistsb.length() - 1);
+                checksumlistsb.setLength(checksumlistsb.length() - 1);
+
+                props.put(DISTRIBUTION_URL_PROPERTY, distlistsb.toString());
+                if (verifyDownload) {
+                        props.put(CHECKSUM_URL_PROPERTY, checksumlistsb.toString());
+                }
+
                 File file = new File(wrapperSupportFolder, WRAPPER_PROPERTIES_FILE_NAME);
 
                 FileOutputStream fileOut = null;

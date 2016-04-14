@@ -55,11 +55,50 @@ public class Installer
     public File createDist( WrapperConfiguration configuration )
         throws Exception
     {
-        URI distributionUrl = configuration.getDistribution();
+        List<URI> distributionUrlList = configuration.getDistribution();
+        List<URI> checksumUriList = configuration.getChecksum();
+        Exception failure = null;
+
+        for ( int i = 0; i < distributionUrlList.size(); ++i )
+        {
+            URI distributionUrl = distributionUrlList.get(i);
+            URI checksumUrl = null;
+            if ( configuration.isVerifyDownload() )
+            {
+                checksumUrl = checksumUriList.get( i );
+            }
+            try
+            {
+               return createDistFromUri( configuration, distributionUrl, checksumUrl );
+            }
+            catch ( Exception e )
+            {
+                System.out.println( String.format( "Maven distribution '%s' failed: %s", distributionUrl, e.getMessage() ) );
+                if ( failure == null )
+                {
+                    failure = e;
+                }
+                else if ( failure != e )
+                {
+                    failure.addSuppressed( e );
+                }
+            }
+        }
+
+        if ( failure == null )
+        {
+            throw new RuntimeException( "No distributions configured. Expected to find at least 1 distribution." );
+        }
+
+        throw failure;
+    }
+
+    private File createDistFromUri( final WrapperConfiguration configuration, final URI distributionUrl, final URI checksumUrl )
+            throws Exception {
         boolean alwaysDownload = configuration.isAlwaysDownload();
         boolean alwaysUnpack = configuration.isAlwaysUnpack();
 
-        PathAssembler.LocalDistribution localDistribution = pathAssembler.getDistribution( configuration );
+        PathAssembler.LocalDistribution localDistribution = pathAssembler.getDistribution( configuration, distributionUrl );
 
         File localZipFile = localDistribution.getZipFile();
         boolean downloaded = false;
@@ -71,7 +110,7 @@ public class Installer
             download.download( distributionUrl, tmpZipFile );
             if ( configuration.isVerifyDownload() ) {
                 File localChecksumFile = new File( localZipFile.getParentFile(), localZipFile.getName() + ".checksum" );
-                verifyDistribution( configuration, distributionUrl, localChecksumFile, tmpZipFile );
+                verifyDistribution( configuration, distributionUrl, checksumUrl, localChecksumFile, tmpZipFile );
             }
             tmpZipFile.renameTo( localZipFile );
             downloaded = true;
@@ -107,22 +146,20 @@ public class Installer
         return dirs.get( 0 );
     }
 
-    private void verifyDistribution( WrapperConfiguration configuration, URI distributionUrl, File localChecksumFile, File distributionZipFile )
+    private void verifyDistribution( WrapperConfiguration configuration, URI distributionUrl, URI checksumUrl, File localChecksumFile, File distributionZipFile )
             throws Exception
     {
-        URI checksumUri = configuration.getChecksum();
-
         File tmpZipFile = new File( localChecksumFile.getParentFile(), localChecksumFile.getName() + ".part" );
         tmpZipFile.delete();
-        System.out.println( "Verifying with " + checksumUri );
-        download.download( checksumUri, tmpZipFile );
+        System.out.println( "Verifying with " + checksumUrl );
+        download.download( checksumUrl, tmpZipFile );
         tmpZipFile.renameTo( localChecksumFile );
 
         BufferedReader checksumReader = new BufferedReader( new FileReader( localChecksumFile ) );
         if ( !configuration.getChecksumAlgorithm().verify( new FileInputStream( distributionZipFile ), checksumReader.readLine() ) ) {
             throw new RuntimeException(
                                         String.format( "Maven distribution '%s' failed to verify against '%s'.",
-                                                distributionUrl, checksumUri ) );
+                                                distributionUrl, checksumUrl ) );
         }
     }
 

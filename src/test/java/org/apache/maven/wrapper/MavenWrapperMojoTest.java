@@ -16,15 +16,19 @@
 package org.apache.maven.wrapper;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.times;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
+
 
 import org.apache.commons.io.IOUtils;
 import org.apache.maven.artifact.Artifact;
@@ -43,6 +47,9 @@ public class MavenWrapperMojoTest extends AbstractMojoTestCase {
         private static final String TEST_WRAPPER_DIR_LOCATION = "target/test-wrapper";
         private static final String TEST_SUPPORT_DIR_LOCATION = "support";
         private static final String TEST_DISTRIBUTION_URL = "http://mirrors.ibiblio.org/maven2/org/apache/maven/apache-maven";
+        private static final List<String> TEST_DISTRIBUTION_URL_LIST = Collections.unmodifiableList(Arrays.asList(
+                "http://mirrors.ibiblio.org/maven2/org/apache/maven/apache-maven",
+                "https://repo1.maven.org/maven2/org/apache/maven/apache-maven"));
         private static final String PLUGIN_TEST_FILE_LOCATION = "src/test/resources/org/apache/maven/wrapper/plugin-config.xml";
         private static final String PLUGIN_TEST_ARTIFACT_LOCATION = "src/test/resources/org/apache/maven/wrapper/dummy-wrapper-artifact.txt";
         private static final String MAVEN_RUNTIME_VERSION = "0.0.1";
@@ -95,17 +102,25 @@ public class MavenWrapperMojoTest extends AbstractMojoTestCase {
         }
 
         private String getExpectedDistributionUrl() {
-                StringBuilder sb = new StringBuilder(TEST_DISTRIBUTION_URL).append('/');
-                sb.append(MavenWrapperMojo.DIST_FILENAME_PATH_TEMPLATE);
-
-                return String.format(sb.toString(), MAVEN_RUNTIME_VERSION, MAVEN_RUNTIME_VERSION);
+                StringBuilder sb = new StringBuilder();
+                for (String testDistributionUrl : TEST_DISTRIBUTION_URL_LIST) {
+                        sb.append(testDistributionUrl).append('/');
+                        sb.append(String.format(MavenWrapperMojo.DIST_FILENAME_PATH_TEMPLATE, MAVEN_RUNTIME_VERSION, MAVEN_RUNTIME_VERSION));
+                        sb.append(",");
+                }
+                sb.setLength(sb.length() - 1);
+                return sb.toString();
         }
 
         private String getExpectedChecksumUrl() {
-                StringBuilder sb = new StringBuilder(TEST_DISTRIBUTION_URL).append('/');
-                sb.append(MavenWrapperMojo.CHECKSUM_FILENAME_PATH_TEMPLATE);
-
-                return String.format(sb.toString(), MAVEN_RUNTIME_VERSION, MAVEN_RUNTIME_VERSION, CHECKSUM_EXTENSION);
+                StringBuilder sb = new StringBuilder();
+                for (String testDistributionUrl : TEST_DISTRIBUTION_URL_LIST) {
+                        sb.append(testDistributionUrl).append('/');
+                        sb.append(String.format(MavenWrapperMojo.CHECKSUM_FILENAME_PATH_TEMPLATE, MAVEN_RUNTIME_VERSION, MAVEN_RUNTIME_VERSION, CHECKSUM_EXTENSION));
+                        sb.append(",");
+                }
+                sb.setLength(sb.length() - 1);
+                return sb.toString();
         }
 
         protected void setUp() throws Exception {
@@ -124,6 +139,7 @@ public class MavenWrapperMojoTest extends AbstractMojoTestCase {
 
                 assertNotNull(mojo.getWrapperDirectory());
                 assertNotNull(mojo.getBaseDistributionUrl());
+                assertNotNull(mojo.getBaseDistributionUrlList());
                 assertNotNull(mojo.getWrapperScriptDirectory());
                 assertNotNull(mojo.getMavenVersion());
                 assertNotNull(mojo.getVerifyDownload());
@@ -134,6 +150,7 @@ public class MavenWrapperMojoTest extends AbstractMojoTestCase {
                 assertEquals(wrapperSupportDir.getAbsolutePath(), mojo.getWrapperDirectory());
                 assertEquals(MAVEN_RUNTIME_VERSION, mojo.getMavenVersion());
                 assertEquals(TEST_DISTRIBUTION_URL, mojo.getBaseDistributionUrl());
+                assertEquals(TEST_DISTRIBUTION_URL_LIST, mojo.getBaseDistributionUrlList());
                 assertEquals(VERIFY_DOWNLOAD, mojo.getVerifyDownload());
                 assertEquals(CHECKSUM_EXTENSION, mojo.getChecksumExtension());
                 assertEquals(CHECKSUM_ALGORITHM, mojo.getChecksumAlgorithm());
