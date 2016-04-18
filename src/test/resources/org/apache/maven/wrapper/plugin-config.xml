@@ -14,6 +14,11 @@
                                 <configuration>
                                         <!-- optional base distribution url -->
                                         <baseDistributionUrl>http://mirrors.ibiblio.org/maven2/org/apache/maven/apache-maven</baseDistributionUrl>
+                                        <!-- optional base distribution url -->
+                                        <baseDistributionUrlList>
+                                                <baseDistributionUrl>http://mirrors.ibiblio.org/maven2/org/apache/maven/apache-maven</baseDistributionUrl>
+                                                <baseDistributionUrl>https://repo1.maven.org/maven2/org/apache/maven/apache-maven</baseDistributionUrl>
+                                        </baseDistributionUrlList>
                                         <!-- optional folder for generated scripts -->
                                         <wrapperScriptDirectory>${basedir}/target/test-wrapper</wrapperScriptDirectory>
                                         <!-- optional wrapper jar output folder -->

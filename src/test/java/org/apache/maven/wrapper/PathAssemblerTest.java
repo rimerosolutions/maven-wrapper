@@ -22,6 +22,7 @@ import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.net.URI;
+import java.util.Collections;
 import java.util.regex.Pattern;
 
 import org.hamcrest.BaseMatcher;
@@ -34,7 +35,10 @@ import org.junit.Test;
  * @author Hans Dockter
  */
 public class PathAssemblerTest {
-        public static final String TEST_MAVEN_USER_HOME = "someUserHome";
+        private static final String TEST_MAVEN_USER_HOME = "someUserHome";
+        private static final URI TEST_DISTRIBUTION_URI = URI.create("http://server/dist/maven-0.9-bin.zip");
+        private static final URI TEST_DISTRIBUTION_NO_TYPE_URI = URI.create("http://server/dist/maven-1.0.zip");
+
         private PathAssembler pathAssembler = new PathAssembler(new File(TEST_MAVEN_USER_HOME));
         final WrapperConfiguration configuration = new WrapperConfiguration();
 
@@ -48,9 +52,9 @@ public class PathAssemblerTest {
 
         @Test
         public void distributionDirWithMavenUserHomeBase() throws Exception {
-                configuration.setDistribution(new URI("http://server/dist/maven-0.9-bin.zip"));
+                configuration.setDistribution(Collections.singletonList(TEST_DISTRIBUTION_URI));
 
-                File distributionDir = pathAssembler.getDistribution(configuration).getDistributionDir();
+                File distributionDir = pathAssembler.getDistribution(configuration, TEST_DISTRIBUTION_URI).getDistributionDir();
                 assertThat(distributionDir.getName(), matchesRegexp("[a-z0-9]+"));
                 assertThat(distributionDir.getParentFile(), equalTo(file(TEST_MAVEN_USER_HOME + "/somePath/maven-0.9-bin")));
         }
@@ -58,20 +62,20 @@ public class PathAssemblerTest {
         @Test
         public void distributionDirWithProjectBase() throws Exception {
                 configuration.setDistributionBase(PathAssembler.PROJECT_STRING);
-                configuration.setDistribution(new URI("http://server/dist/maven-0.9-bin.zip"));
+                configuration.setDistribution(Collections.singletonList(TEST_DISTRIBUTION_URI));
 
-                File distributionDir = pathAssembler.getDistribution(configuration).getDistributionDir();
+                File distributionDir = pathAssembler.getDistribution(configuration, TEST_DISTRIBUTION_URI).getDistributionDir();
                 assertThat(distributionDir.getName(), matchesRegexp("[a-z0-9]+"));
                 assertThat(distributionDir.getParentFile(), equalTo(file(currentDirPath() + "/somePath/maven-0.9-bin")));
         }
 
         @Test
         public void distributionDirWithUnknownBase() throws Exception {
-                configuration.setDistribution(new URI("http://server/dist/maven-1.0.zip"));
+                configuration.setDistribution(Collections.singletonList(TEST_DISTRIBUTION_NO_TYPE_URI));
                 configuration.setDistributionBase("unknownBase");
 
                 try {
-                        pathAssembler.getDistribution(configuration);
+                        pathAssembler.getDistribution(configuration, TEST_DISTRIBUTION_NO_TYPE_URI);
                         fail();
                 }
                 catch (RuntimeException e) {
@@ -81,9 +85,9 @@ public class PathAssemblerTest {
 
         @Test
         public void distZipWithMavenUserHomeBase() throws Exception {
-                configuration.setDistribution(new URI("http://server/dist/maven-1.0.zip"));
+                configuration.setDistribution(Collections.singletonList(TEST_DISTRIBUTION_NO_TYPE_URI));
 
-                File dist = pathAssembler.getDistribution(configuration).getZipFile();
+                File dist = pathAssembler.getDistribution(configuration, TEST_DISTRIBUTION_NO_TYPE_URI).getZipFile();
                 assertThat(dist.getName(), equalTo("maven-1.0.zip"));
                 assertThat(dist.getParentFile().getName(), matchesRegexp("[a-z0-9]+"));
                 assertThat(dist.getParentFile().getParentFile(),
@@ -93,9 +97,9 @@ public class PathAssemblerTest {
         @Test
         public void distZipWithProjectBase() throws Exception {
                 configuration.setZipBase(PathAssembler.PROJECT_STRING);
-                configuration.setDistribution(new URI("http://server/dist/maven-1.0.zip"));
+                configuration.setDistribution(Collections.singletonList(TEST_DISTRIBUTION_NO_TYPE_URI));
 
-                File dist = pathAssembler.getDistribution(configuration).getZipFile();
+                File dist = pathAssembler.getDistribution(configuration, TEST_DISTRIBUTION_NO_TYPE_URI).getZipFile();
                 assertThat(dist.getName(), equalTo("maven-1.0.zip"));
                 assertThat(dist.getParentFile().getName(), matchesRegexp("[a-z0-9]+"));
                 assertThat(dist.getParentFile().getParentFile(), equalTo(file(currentDirPath() + "/somePath/maven-1.0")));

@@ -43,11 +43,11 @@ public class PathAssembler
     /**
      * Determines the local locations for the distribution to use given the supplied configuration.
      */
-    public LocalDistribution getDistribution( WrapperConfiguration configuration )
+    public LocalDistribution getDistribution( WrapperConfiguration configuration, URI distributionUrl )
     {
-        String baseName = getDistName( configuration.getDistribution() );
+        String baseName = getDistName( distributionUrl );
         String distName = removeExtension( baseName );
-        String rootDirName = rootDirName( distName, configuration );
+        String rootDirName = rootDirName( distName, distributionUrl );
         File distDir =
             new File( getBaseDir( configuration.getDistributionBase() ), configuration.getDistributionPath() + "/"
                 + rootDirName );
@@ -57,9 +57,9 @@ public class PathAssembler
         return new LocalDistribution( distDir, distZip );
     }
 
-    private String rootDirName( String distName, WrapperConfiguration configuration )
+    private String rootDirName( String distName, URI distributionUrl )
     {
-        String urlHash = getMd5Hash( configuration.getDistribution().toString() );
+        String urlHash = getMd5Hash( distributionUrl.toString() );
         return String.format( "%s/%s", distName, urlHash );
     }
 

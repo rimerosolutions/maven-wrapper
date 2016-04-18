@@ -47,30 +47,36 @@ public class WrapperExecutorTest {
         public void loadWrapperMetadataFromFile() throws Exception {
                 WrapperExecutor wrapper = WrapperExecutor.forWrapperPropertiesFile(propertiesFile, System.out);
 
-                Assert.assertEquals(new URI("http://server/test/maven.zip"), wrapper.getDistribution());
-                Assert.assertEquals(new URI("http://server/test/maven.zip"), wrapper.getConfiguration().getDistribution());
+                Assert.assertEquals(1, wrapper.getDistribution().size());
+                Assert.assertEquals(new URI("http://server/test/maven.zip"), wrapper.getDistribution().get(0));
+                Assert.assertEquals(1, wrapper.getConfiguration().getDistribution().size());
+                Assert.assertEquals(new URI("http://server/test/maven.zip"), wrapper.getConfiguration().getDistribution().get(0));
                 Assert.assertEquals("testDistBase", wrapper.getConfiguration().getDistributionBase());
                 Assert.assertEquals("testDistPath", wrapper.getConfiguration().getDistributionPath());
                 Assert.assertEquals("testZipBase", wrapper.getConfiguration().getZipBase());
                 Assert.assertEquals("testZipPath", wrapper.getConfiguration().getZipPath());
                 Assert.assertTrue(wrapper.getConfiguration().isVerifyDownload());
                 Assert.assertEquals(Checksum.MD5, wrapper.getConfiguration().getChecksumAlgorithm());
-                Assert.assertEquals(URI.create("http://server/test/maven.zip.md5"), wrapper.getConfiguration().getChecksum());
+                Assert.assertEquals(1, wrapper.getConfiguration().getChecksum().size());
+                Assert.assertEquals(URI.create("http://server/test/maven.zip.md5"), wrapper.getConfiguration().getChecksum().get(0));
         }
 
         @Test
         public void loadWrapperMetadataFromDirectory() throws Exception {
                 WrapperExecutor wrapper = WrapperExecutor.forProjectDirectory(testDir, System.out);
 
-                Assert.assertEquals(new URI("http://server/test/maven.zip"), wrapper.getDistribution());
-                Assert.assertEquals(new URI("http://server/test/maven.zip"), wrapper.getConfiguration().getDistribution());
+                Assert.assertEquals(1, wrapper.getDistribution().size());
+                Assert.assertEquals(new URI("http://server/test/maven.zip"), wrapper.getDistribution().get(0));
+                Assert.assertEquals(1, wrapper.getConfiguration().getDistribution().size());
+                Assert.assertEquals(new URI("http://server/test/maven.zip"), wrapper.getConfiguration().getDistribution().get(0));
                 Assert.assertEquals("testDistBase", wrapper.getConfiguration().getDistributionBase());
                 Assert.assertEquals("testDistPath", wrapper.getConfiguration().getDistributionPath());
                 Assert.assertEquals("testZipBase", wrapper.getConfiguration().getZipBase());
                 Assert.assertEquals("testZipPath", wrapper.getConfiguration().getZipPath());
                 Assert.assertTrue(wrapper.getConfiguration().isVerifyDownload());
                 Assert.assertEquals(Checksum.MD5, wrapper.getConfiguration().getChecksumAlgorithm());
-                Assert.assertEquals(URI.create("http://server/test/maven.zip.md5"), wrapper.getConfiguration().getChecksum());
+                Assert.assertEquals(1, wrapper.getConfiguration().getChecksum().size());
+                Assert.assertEquals(URI.create("http://server/test/maven.zip.md5"), wrapper.getConfiguration().getChecksum().get(0));
         }
 
         @Test
@@ -97,8 +103,10 @@ public class WrapperExecutorTest {
 
                 WrapperExecutor wrapper = WrapperExecutor.forWrapperPropertiesFile(propertiesFile, System.out);
 
-                Assert.assertEquals(new URI("http://server/test/maven.zip"), wrapper.getDistribution());
-                Assert.assertEquals(new URI("http://server/test/maven.zip"), wrapper.getConfiguration().getDistribution());
+                Assert.assertEquals(1, wrapper.getDistribution().size());
+                Assert.assertEquals(new URI("http://server/test/maven.zip"), wrapper.getDistribution().get(0));
+                Assert.assertEquals(1, wrapper.getConfiguration().getDistribution().size());
+                Assert.assertEquals(new URI("http://server/test/maven.zip"), wrapper.getConfiguration().getDistribution().get(0));
                 Assert.assertEquals(PathAssembler.MAVEN_USER_HOME_STRING, wrapper.getConfiguration().getDistributionBase());
                 Assert.assertEquals(Installer.DEFAULT_DISTRIBUTION_PATH, wrapper.getConfiguration().getDistributionPath());
                 Assert.assertEquals(PathAssembler.MAVEN_USER_HOME_STRING, wrapper.getConfiguration().getZipBase());
@@ -210,8 +218,9 @@ public class WrapperExecutorTest {
                 writePropertiesFile(properties, propertiesFile, "header");
 
                 WrapperExecutor wrapper = WrapperExecutor.forWrapperPropertiesFile(propertiesFile, System.out);
-                Assert.assertNotEquals("some/relative/url/to/bin.zip", wrapper.getDistribution().getSchemeSpecificPart());
-                Assert.assertTrue(wrapper.getDistribution().getSchemeSpecificPart().endsWith("some/relative/url/to/bin.zip"));
+                Assert.assertEquals(1, wrapper.getDistribution().size());
+                Assert.assertNotEquals("some/relative/url/to/bin.zip", wrapper.getDistribution().get(0).getSchemeSpecificPart());
+                Assert.assertTrue(wrapper.getDistribution().get(0).getSchemeSpecificPart().endsWith("some/relative/url/to/bin.zip"));
         }
 
         @Test
@@ -224,8 +233,9 @@ public class WrapperExecutorTest {
                 writePropertiesFile(properties, propertiesFile, "header");
 
                 WrapperExecutor wrapper = WrapperExecutor.forWrapperPropertiesFile(propertiesFile, System.out);
-                Assert.assertNotEquals("some/relative/url/to/bin.md5", wrapper.getConfiguration().getChecksum().getSchemeSpecificPart());
-                Assert.assertTrue(wrapper.getConfiguration().getChecksum().getSchemeSpecificPart().endsWith("some/relative/url/to/bin.md5"));
+                Assert.assertEquals(1, wrapper.getConfiguration().getChecksum().size());
+                Assert.assertNotEquals("some/relative/url/to/bin.md5", wrapper.getConfiguration().getChecksum().get(0).getSchemeSpecificPart());
+                Assert.assertTrue(wrapper.getConfiguration().getChecksum().get(0).getSchemeSpecificPart().endsWith("some/relative/url/to/bin.md5"));
         }
 
         private void writePropertiesFile(Properties properties, File propertiesFile, String message) throws Exception {
