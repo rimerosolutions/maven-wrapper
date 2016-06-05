@@ -15,25 +15,20 @@
  */
 package org.apache.maven.wrapper.cli;
 
-public class SystemPropertiesCommandLineConverter
-    extends AbstractPropertiesCommandLineConverter
-{
+public class SystemPropertiesCommandLineConverter extends AbstractPropertiesCommandLineConverter {
 
     @Override
-    protected String getPropertyOption()
-    {
+    protected String getPropertyOption() {
         return "D";
     }
 
     @Override
-    protected String getPropertyOptionDetailed()
-    {
+    protected String getPropertyOptionDetailed() {
         return "system-prop";
     }
 
     @Override
-    protected String getPropertyOptionDescription()
-    {
+    protected String getPropertyOptionDescription() {
         return "Set system property of the JVM (e.g. -Dmyprop=myvalue).";
     }
 }

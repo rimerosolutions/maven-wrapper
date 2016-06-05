@@ -23,106 +23,82 @@ import java.security.MessageDigest;
 /**
  * @author Hans Dockter
  */
-public class PathAssembler
-{
+public class PathAssembler {
     public static final String MAVEN_USER_HOME_STRING = "MAVEN_USER_HOME";
 
     public static final String PROJECT_STRING = "PROJECT";
 
     private File mavenUserHome;
 
-    public PathAssembler()
-    {
+    public PathAssembler() {
     }
 
-    public PathAssembler( File mavenUserHome )
-    {
+    public PathAssembler(File mavenUserHome) {
         this.mavenUserHome = mavenUserHome;
     }
 
     /**
-     * Determines the local locations for the distribution to use given the supplied configuration.
+     * Determines the local locations for the distribution to use given the
+     * supplied configuration.
      */
-    public LocalDistribution getDistribution( WrapperConfiguration configuration, URI distributionUrl )
-    {
-        String baseName = getDistName( distributionUrl );
-        String distName = removeExtension( baseName );
-        String rootDirName = rootDirName( distName, distributionUrl );
-        File distDir =
-            new File( getBaseDir( configuration.getDistributionBase() ), configuration.getDistributionPath() + "/"
-                + rootDirName );
-        File distZip =
-            new File( getBaseDir( configuration.getZipBase() ), configuration.getZipPath() + "/" + rootDirName + "/"
-                + baseName );
-        return new LocalDistribution( distDir, distZip );
+    public LocalDistribution getDistribution(WrapperConfiguration configuration, URI distributionUrl) {
+        String baseName = getDistName(distributionUrl);
+        String distName = removeExtension(baseName);
+        String rootDirName = rootDirName(distName, distributionUrl);
+        File distDir = new File(getBaseDir(configuration.getDistributionBase()), configuration.getDistributionPath() + "/" + rootDirName);
+        File distZip = new File(getBaseDir(configuration.getZipBase()), configuration.getZipPath() + "/" + rootDirName + "/" + baseName);
+        return new LocalDistribution(distDir, distZip);
     }
 
-    private String rootDirName( String distName, URI distributionUrl )
-    {
-        String urlHash = getMd5Hash( distributionUrl.toString() );
-        return String.format( "%s/%s", distName, urlHash );
+    private String rootDirName(String distName, URI distributionUrl) {
+        String urlHash = getMd5Hash(distributionUrl.toString());
+        return String.format("%s/%s", distName, urlHash);
     }
 
-    private String getMd5Hash( String string )
-    {
-        try
-        {
-            MessageDigest messageDigest = MessageDigest.getInstance( "MD5" );
+    private String getMd5Hash(String string) {
+        try {
+            MessageDigest messageDigest = MessageDigest.getInstance("MD5");
             byte[] bytes = string.getBytes();
-            messageDigest.update( bytes );
-            return new BigInteger( 1, messageDigest.digest() ).toString( 32 );
-        }
-        catch ( Exception e )
-        {
-            throw new RuntimeException( "Could not hash input string.", e );
+            messageDigest.update(bytes);
+            return new BigInteger(1, messageDigest.digest()).toString(32);
+        } catch (Exception e) {
+            throw new RuntimeException("Could not hash input string.", e);
         }
     }
 
-    private String removeExtension( String name )
-    {
-        int p = name.lastIndexOf( "." );
-        if ( p < 0 )
-        {
+    private String removeExtension(String name) {
+        int p = name.lastIndexOf(".");
+        if (p < 0) {
             return name;
         }
-        return name.substring( 0, p );
+        return name.substring(0, p);
     }
 
-    private String getDistName( URI distUrl )
-    {
+    private String getDistName(URI distUrl) {
         String path = distUrl.getPath();
-        int p = path.lastIndexOf( "/" );
-        if ( p < 0 )
-        {
+        int p = path.lastIndexOf("/");
+        if (p < 0) {
             return path;
         }
-        return path.substring( p + 1 );
+        return path.substring(p + 1);
     }
 
-    private File getBaseDir( String base )
-    {
-        if ( base.equals( MAVEN_USER_HOME_STRING ) )
-        {
+    private File getBaseDir(String base) {
+        if (base.equals(MAVEN_USER_HOME_STRING)) {
             return mavenUserHome;
-        }
-        else if ( base.equals( PROJECT_STRING ) )
-        {
-            return new File( System.getProperty( "user.dir" ) );
-        }
-        else
-        {
-            throw new RuntimeException( "Base: " + base + " is unknown" );
+        } else if (base.equals(PROJECT_STRING)) {
+            return new File(System.getProperty("user.dir"));
+        } else {
+            throw new RuntimeException("Base: " + base + " is unknown");
         }
     }
 
-    public class LocalDistribution
-    {
+    public static class LocalDistribution {
         private final File distZip;
 
         private final File distDir;
 
-        public LocalDistribution( File distDir, File distZip )
-        {
+        public LocalDistribution(File distDir, File distZip) {
             this.distDir = distDir;
             this.distZip = distZip;
         }
@@ -130,16 +106,14 @@ public class PathAssembler
         /**
          * Returns the location to install the distribution into.
          */
-        public File getDistributionDir()
-        {
+        public File getDistributionDir() {
             return distDir;
         }
 
         /**
          * Returns the location to install the distribution ZIP file to.
          */
-        public File getZipFile()
-        {
+        public File getZipFile() {
             return distZip;
         }
     }

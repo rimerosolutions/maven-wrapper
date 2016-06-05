@@ -17,41 +17,43 @@ package org.apache.maven.wrapper;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 
 /**
  * @author Hans Dockter
  */
-public class BootstrapMainStarter
-{
-    public void start( String[] args, File mavenHome )
-        throws Exception
-    {
-        File mavenJar = findLauncherJar( mavenHome );
-        URLClassLoader contextClassLoader =
-            new URLClassLoader( new URL[] { mavenJar.toURI().toURL() }, ClassLoader.getSystemClassLoader().getParent() );
-        Thread.currentThread().setContextClassLoader( contextClassLoader );
-        Class<?> mainClass = contextClassLoader.loadClass( "org.codehaus.plexus.classworlds.launcher.Launcher" );
+public class BootstrapMainStarter {
+    private static final String ERROR_TEMPLATE = "Could not locate the Maven launcher JAR in Maven distribution '%s'.";
 
-        System.setProperty( "maven.home", mavenHome.getAbsolutePath() );
-        System.setProperty( "classworlds.conf", new File( mavenHome, "/bin/m2.conf" ).getAbsolutePath() );
+    public void start(String[] args, File mavenHome) throws Exception {
+        File mavenJar = findLauncherJar(mavenHome);
+        ClassLoader contextClassLoader = createUrlClassLoader(mavenJar);
+        Thread.currentThread().setContextClassLoader(contextClassLoader);
+        Class<?> mainClass = contextClassLoader.loadClass("org.codehaus.plexus.classworlds.launcher.Launcher");
 
-        Method mainMethod = mainClass.getMethod( "main", String[].class );
-        mainMethod.invoke( null, new Object[] { args } );
+        System.setProperty("maven.home", mavenHome.getAbsolutePath());
+        System.setProperty("classworlds.conf", new File(mavenHome, "/bin/m2.conf").getAbsolutePath());
+
+        Method mainMethod = mainClass.getMethod("main", String[].class);
+        mainMethod.invoke(null, new Object[] { args });
     }
 
-    private File findLauncherJar( File mavenHome )
-    {
-        for ( File file : new File( mavenHome, "boot" ).listFiles() )
-        {
-            if ( file.getName().matches( "plexus-classworlds-.*\\.jar" ) )
-            {
+    private ClassLoader createUrlClassLoader(File mavenJar) throws MalformedURLException {
+        URL[] urls = { mavenJar.toURI().toURL() };
+        ClassLoader parentClassLoader = ClassLoader.getSystemClassLoader().getParent();
+        URLClassLoader contextClassLoader = new URLClassLoader(urls, parentClassLoader);
+
+        return contextClassLoader;
+    }
+
+    private File findLauncherJar(File mavenHome) {
+        for (File file : new File(mavenHome, "boot").listFiles()) {
+            if (file.getName().matches("plexus-classworlds-.*\\.jar")) {
                 return file;
             }
         }
-        throw new RuntimeException(
-                                    String.format( "Could not locate the Maven launcher JAR in Maven distribution '%s'.",
-                                                   mavenHome ) );
+        throw new RuntimeException(String.format(ERROR_TEMPLATE, mavenHome));
     }
 }

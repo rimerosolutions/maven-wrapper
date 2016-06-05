@@ -18,17 +18,16 @@ package org.apache.maven.wrapper;
 import java.net.URI;
 import java.util.List;
 
-public class WrapperConfiguration
-{
+public class WrapperConfiguration {
     public static final String ALWAYS_UNPACK_ENV = "MAVEN_WRAPPER_ALWAYS_UNPACK";
 
     public static final String ALWAYS_DOWNLOAD_ENV = "MAVEN_WRAPPER_ALWAYS_DOWNLOAD";
 
-    private boolean alwaysUnpack = Boolean.parseBoolean( System.getenv( ALWAYS_UNPACK_ENV ) );
+    private boolean alwaysUnpack = Boolean.parseBoolean(System.getenv(ALWAYS_UNPACK_ENV));
 
-    private boolean alwaysDownload = Boolean.parseBoolean( System.getenv( ALWAYS_DOWNLOAD_ENV ) );
+    private boolean alwaysDownload = Boolean.parseBoolean(System.getenv(ALWAYS_DOWNLOAD_ENV));
 
-    private List<URI> distribution;
+    private List<URI> distributionUris;
 
     private String distributionBase = PathAssembler.MAVEN_USER_HOME_STRING;
 
@@ -40,77 +39,61 @@ public class WrapperConfiguration
 
     private boolean verifyDownload = false;
 
-    private List<URI> checksum = null;
-
     private Checksum checksumAlgorithm = null;
 
-    public boolean isAlwaysDownload()
-    {
+    public boolean isAlwaysDownload() {
         return alwaysDownload;
     }
 
-    public void setAlwaysDownload( boolean alwaysDownload )
-    {
+    public void setAlwaysDownload(boolean alwaysDownload) {
         this.alwaysDownload = alwaysDownload;
     }
 
-    public boolean isAlwaysUnpack()
-    {
+    public boolean isAlwaysUnpack() {
         return alwaysUnpack;
     }
 
-    public void setAlwaysUnpack( boolean alwaysUnpack )
-    {
+    public void setAlwaysUnpack(boolean alwaysUnpack) {
         this.alwaysUnpack = alwaysUnpack;
     }
 
-    public List<URI> getDistribution()
-    {
-        return distribution;
+    public List<URI> getDistributionUris() {
+        return distributionUris;
     }
 
-    public void setDistribution( List<URI> distribution )
-    {
-        this.distribution = distribution;
+    public void setDistributionUris(List<URI> distribution) {
+        this.distributionUris = distribution;
     }
 
-    public String getDistributionBase()
-    {
+    public String getDistributionBase() {
         return distributionBase;
     }
 
-    public void setDistributionBase( String distributionBase )
-    {
+    public void setDistributionBase(String distributionBase) {
         this.distributionBase = distributionBase;
     }
 
-    public String getDistributionPath()
-    {
+    public String getDistributionPath() {
         return distributionPath;
     }
 
-    public void setDistributionPath( String distributionPath )
-    {
+    public void setDistributionPath(String distributionPath) {
         this.distributionPath = distributionPath;
     }
 
-    public String getZipBase()
-    {
+    public String getZipBase() {
         return zipBase;
     }
 
-    public void setZipBase( String zipBase )
-    {
+    public void setZipBase(String zipBase) {
         this.zipBase = zipBase;
     }
 
-    public String getZipPath()
-    {
+    public String getZipPath() {
         return zipPath;
     }
 
-    public void setZipPath( String zipPath )
-    {
+    public void setZipPath(String zipPath) {
         this.zipPath = zipPath;
     }
 
@@ -118,23 +101,15 @@ public class WrapperConfiguration
         return verifyDownload;
     }
 
-    public void setVerifyDownload( boolean verifyDownload ) {
+    public void setVerifyDownload(boolean verifyDownload) {
         this.verifyDownload = verifyDownload;
-    }
-
-    public List<URI> getChecksum() {
-        return checksum;
-    }
-
-    public void setChecksum( List<URI> checksum ) {
-        this.checksum = checksum;
     }
 
     public Checksum getChecksumAlgorithm() {
         return checksumAlgorithm;
     }
 
-    public void setChecksumAlgorithm( Checksum checksumAlgorithm ) {
+    public void setChecksumAlgorithm(Checksum checksumAlgorithm) {
         this.checksumAlgorithm = checksumAlgorithm;
     }
 }

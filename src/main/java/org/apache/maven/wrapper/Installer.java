@@ -21,275 +21,309 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.StringWriter;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.Enumeration;
-import java.util.Formatter;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import org.apache.maven.wrapper.PathAssembler.LocalDistribution;
 
 /**
  * @author Hans Dockter
  */
-public class Installer
-{
+public class Installer {
+    private static final Logger LOG = Logger.getLogger(Installer.class.getName());
     public static final String DEFAULT_DISTRIBUTION_PATH = "wrapper/dists";
 
     private final Downloader download;
 
     private final PathAssembler pathAssembler;
 
-    public Installer( Downloader download, PathAssembler pathAssembler )
-    {
+    public Installer(Downloader download, PathAssembler pathAssembler) {
         this.download = download;
         this.pathAssembler = pathAssembler;
     }
 
-    public File createDist( WrapperConfiguration configuration )
-        throws Exception
-    {
-        List<URI> distributionUrlList = configuration.getDistribution();
-        List<URI> checksumUriList = configuration.getChecksum();
+    public File createDist(WrapperConfiguration configuration) throws Exception {
         Exception failure = null;
 
-        for ( int i = 0; i < distributionUrlList.size(); ++i )
-        {
-            URI distributionUrl = distributionUrlList.get(i);
-            URI checksumUrl = null;
-            if ( configuration.isVerifyDownload() )
-            {
-                checksumUrl = checksumUriList.get( i );
-            }
-            try
-            {
-               return createDistFromUri( configuration, distributionUrl, checksumUrl );
-            }
-            catch ( Exception e )
-            {
-                System.out.println( String.format( "Maven distribution '%s' failed: %s", distributionUrl, e.getMessage() ) );
-                if ( failure == null )
-                {
+	for (URI distributionUri : configuration.getDistributionUris()) {
+            try {
+                return createDistFromUri(configuration, distributionUri);
+            } catch (Exception e) {
+                LOG.warning(String.format("Maven distribution '%s' failed: %s", distributionUri, e.getMessage()));
+		
+                if (failure == null) {
                     failure = e;
-                }
-                else if ( failure != e )
-                {
-                    failure.addSuppressed( e );
+                } else if (failure != e) {
+                    failure.addSuppressed(e);
                 }
             }
         }
 
-        if ( failure == null )
-        {
-            throw new RuntimeException( "No distributions configured. Expected to find at least 1 distribution." );
+        if (failure == null) {
+            throw new RuntimeException("No distributions configured. Expected to find at least 1 distribution.");
         }
 
         throw failure;
     }
 
-    private File createDistFromUri( final WrapperConfiguration configuration, final URI distributionUrl, final URI checksumUrl )
-            throws Exception {
+    private File createDistFromUri(final WrapperConfiguration configuration, final URI distributionUrl) throws Exception {
         boolean alwaysDownload = configuration.isAlwaysDownload();
         boolean alwaysUnpack = configuration.isAlwaysUnpack();
 
-        PathAssembler.LocalDistribution localDistribution = pathAssembler.getDistribution( configuration, distributionUrl );
-
+        LocalDistribution localDistribution = pathAssembler.getDistribution(configuration, distributionUrl);
         File localZipFile = localDistribution.getZipFile();
         boolean downloaded = false;
-        if ( alwaysDownload || !localZipFile.exists() )
-        {
-            File tmpZipFile = new File( localZipFile.getParentFile(), localZipFile.getName() + ".part" );
+	
+        if (alwaysDownload || !localZipFile.exists()) {
+            File tmpZipFile = new File(localZipFile.getParentFile(), localZipFile.getName() + ".part");
             tmpZipFile.delete();
-            System.out.println( "Downloading " + distributionUrl );
-            download.download( distributionUrl, tmpZipFile );
-            if ( configuration.isVerifyDownload() ) {
-                File localChecksumFile = new File( localZipFile.getParentFile(), localZipFile.getName() + ".checksum" );
-                verifyDistribution( configuration, distributionUrl, checksumUrl, localChecksumFile, tmpZipFile );
+            LOG.info(String.format("Downloading %s", distributionUrl));
+            download.download(distributionUrl, tmpZipFile);
+	    
+            if (configuration.isVerifyDownload()) {
+                File localChecksumFile = new File(localZipFile.getParentFile(), localZipFile.getName() + ".checksum");
+                verifyDistribution(configuration.getChecksumAlgorithm(), distributionUrl, localChecksumFile, tmpZipFile);
             }
-            tmpZipFile.renameTo( localZipFile );
+	    
+            tmpZipFile.renameTo(localZipFile);
             downloaded = true;
         }
 
         File distDir = localDistribution.getDistributionDir();
-        List<File> dirs = listDirs( distDir );
+        List<File> dirs = listDirs(distDir);
 
-        if ( downloaded || alwaysUnpack || dirs.isEmpty() )
-        {
-            for ( File dir : dirs )
-            {
-                System.out.println( "Deleting directory " + dir.getAbsolutePath() );
-                deleteDir( dir );
+        if (downloaded || alwaysUnpack || dirs.isEmpty()) {
+            for (File dir : dirs) {
+                LOG.info(String.format("Deleting directory %s", dir.getAbsolutePath()));
+                deleteDir(dir);
             }
-            System.out.println( "Unzipping " + localZipFile.getAbsolutePath() + " to " + distDir.getAbsolutePath() );
-            unzip( localZipFile, distDir );
-            dirs = listDirs( distDir );
-            if ( dirs.isEmpty() )
-            {
+	    
+            LOG.info(String.format("Unzipping %s to %s", localZipFile.getAbsolutePath(), distDir.getAbsolutePath()));
+            unzip(localZipFile, distDir);
+            dirs = listDirs(distDir);
+
+	    if (dirs.isEmpty()) {
                 throw new RuntimeException(
-                                            String.format( "Maven distribution '%s' does not contain any directories. Expected to find exactly 1 directory.",
-                                                           distributionUrl ) );
+                        String.format("Maven distribution '%s' does not contain any directories. Expected to find exactly 1 directory.",
+                                distributionUrl));
             }
-            setExecutablePermissions( dirs.get( 0 ) );
+	    
+            setExecutablePermissions(dirs.get(0));
         }
-        if ( dirs.size() != 1 )
-        {
-            throw new RuntimeException(
-                                        String.format( "Maven distribution '%s' contains too many directories. Expected to find exactly 1 directory.",
-                                                       distributionUrl ) );
+	
+        if (dirs.size() != 1) {
+            throw new RuntimeException(String.format(
+                    "Maven distribution '%s' contains too many directories. Expected to find exactly 1 directory.", distributionUrl));
         }
-        return dirs.get( 0 );
+	
+        return dirs.get(0);
     }
 
-    private void verifyDistribution( WrapperConfiguration configuration, URI distributionUrl, URI checksumUrl, File localChecksumFile, File distributionZipFile )
-            throws Exception
-    {
-        File tmpZipFile = new File( localChecksumFile.getParentFile(), localChecksumFile.getName() + ".part" );
+    private void verifyDistribution(Checksum checksum,
+				    URI distributionUri,
+				    File localChecksumFile,
+				    File distributionZipFile) throws Exception {
+        File tmpZipFile = new File(localChecksumFile.getParentFile(), localChecksumFile.getName() + ".part");
         tmpZipFile.delete();
-        System.out.println( "Verifying with " + checksumUrl );
-        download.download( checksumUrl, tmpZipFile );
-        tmpZipFile.renameTo( localChecksumFile );
 
-        BufferedReader checksumReader = new BufferedReader( new FileReader( localChecksumFile ) );
-        if ( !configuration.getChecksumAlgorithm().verify( new FileInputStream( distributionZipFile ), checksumReader.readLine() ) ) {
-            throw new RuntimeException(
-                                        String.format( "Maven distribution '%s' failed to verify against '%s'.",
-                                                distributionUrl, checksumUrl ) );
+	URI checksumUri = URI.create(String.format("%s.%s", distributionUri.toString(), checksum.getDefaultExtension()));
+        LOG.info(String.format("Verifying download with %s", checksumUri));
+        download.download(checksumUri, tmpZipFile);
+        tmpZipFile.renameTo(localChecksumFile);
+
+        BufferedReader checksumReader = null;
+
+        try {
+            checksumReader = new BufferedReader(new InputStreamReader(new FileInputStream(localChecksumFile), "UTF-8"));
+	    
+            if (!checksum.verify(new FileInputStream(distributionZipFile), checksumReader.readLine())) {
+                throw new RuntimeException(
+                        String.format("Maven distribution '%s' failed to verify against '%s'.", distributionUri, checksumUri));
+            }
+        } finally {
+            if (checksumReader != null) {
+                checksumReader.close();
+            }
         }
     }
 
-    private List<File> listDirs( File distDir )
-    {
+    private List<File> listDirs(File distDir) {
         List<File> dirs = new ArrayList<File>();
-        if ( distDir.exists() )
-        {
-            for ( File file : distDir.listFiles() )
-            {
-                if ( file.isDirectory() )
-                {
-                    dirs.add( file );
+	
+        if (distDir.exists()) {
+            for (File file : distDir.listFiles()) {
+                if (file.isDirectory()) {
+                    dirs.add(file);
                 }
             }
         }
+	
         return dirs;
     }
 
-    private void setExecutablePermissions( File mavenHome )
-    {
-        if ( isWindows() )
-        {
+    private void setExecutablePermissions(File mavenHome) {
+        if (isWindows()) {
             return;
         }
-        File mavenCommand = new File( mavenHome, "bin/mvn" );
+
+        File mavenCommand = new File(mavenHome, "bin/mvn");
         String errorMessage = null;
-        try
-        {
-            ProcessBuilder pb = new ProcessBuilder( "chmod", "755", mavenCommand.getCanonicalPath() );
+
+        try {
+            ProcessBuilder pb = new ProcessBuilder("chmod", "755", mavenCommand.getCanonicalPath());
             Process p = pb.start();
-            if ( p.waitFor() == 0 )
-            {
-                System.out.println( "Set executable permissions for: " + mavenCommand.getAbsolutePath() );
+
+            if (p.waitFor() == 0) {
+                LOG.info(String.format("Set executable permissions for: %s", mavenCommand.getAbsolutePath()));
+            } else {
+                BufferedReader is = null;
+
+		try {
+		    is = new BufferedReader(new InputStreamReader(p.getInputStream()));
+		    StringWriter sw = new StringWriter();
+		
+		    for (String line; (line = is.readLine()) != null; ) {
+			sw.write(String.format("%s%n", line));
+		    }
+		
+		    errorMessage = sw.toString();
+		    sw.close();
+		} finally {
+		    if (is != null) {
+			is.close();
+		    }
+		}
             }
-            else
-            {
-                BufferedReader is = new BufferedReader( new InputStreamReader( p.getInputStream() ) );
-                Formatter stdout = new Formatter();
-                String line;
-                while ( ( line = is.readLine() ) != null )
-                {
-                    stdout.format( "%s%n", line );
-                }
-                errorMessage = stdout.toString();
-            }
-        }
-        catch ( IOException e )
-        {
+        } catch (IOException e) {
+            errorMessage = e.getMessage();
+        } catch (InterruptedException e) {
             errorMessage = e.getMessage();
         }
-        catch ( InterruptedException e )
-        {
-            errorMessage = e.getMessage();
-        }
-        if ( errorMessage != null )
-        {
-            System.out.println( "Could not set executable permissions for: " + mavenCommand.getAbsolutePath() );
-            System.out.println( "Please do this manually if you want to use maven." );
+
+        if (errorMessage != null) {
+            LOG.warning("Could not set executable permissions for: " + mavenCommand.getAbsolutePath());
+            LOG.warning("Please do this manually if you want to use maven.");
         }
     }
 
-    private boolean isWindows()
-    {
-        String osName = System.getProperty( "os.name" ).toLowerCase( Locale.US );
-        if ( osName.indexOf( "windows" ) > -1 )
-        {
+    private boolean isWindows() {
+        String osName = System.getProperty("os.name").toLowerCase(Locale.US);
+
+        if (osName.indexOf("windows") > -1) {
             return true;
         }
+
         return false;
     }
 
-    private boolean deleteDir( File dir )
-    {
-        if ( dir.isDirectory() )
-        {
-            String[] children = dir.list();
-            for ( int i = 0; i < children.length; i++ )
-            {
-                boolean success = deleteDir( new File( dir, children[i] ) );
-                if ( !success )
-                {
-                    return false;
+    private boolean deleteDir(File dir) {
+	if (dir == null) {
+	    throw new IllegalArgumentException("Cannot delete null directory");
+	}
+
+	Deque<File> fileDeque = new LinkedList<File>();
+	File[] currentFileList;
+	fileDeque.offerFirst(dir);
+	
+	while (!fileDeque.isEmpty()) {
+	    if (fileDeque.peekFirst().isDirectory()) {
+		currentFileList = fileDeque.peekFirst().listFiles();
+		
+		if (currentFileList != null && currentFileList.length > 0) {
+		    for (File currentFile : currentFileList) {
+			fileDeque.offerFirst(currentFile);
+		    }
+		} else {
+		    if (!deleteFile(fileDeque.pollFirst())) {
+			return false;
+		    }
+		}
+	    } else {
+		if (!deleteFile(fileDeque.pollFirst())) {
+		    return false;
+		}
+	    }
+	}
+
+	return true;
+    }
+
+    private boolean deleteFile(File file) {
+	return file != null && file.exists() && file.delete();
+    }
+    
+    public void unzip(File zip, File dest) throws IOException {
+        Enumeration<? extends ZipEntry> entries;
+        ZipFile zipFile;
+
+        zipFile = new ZipFile(zip);
+
+        entries = zipFile.entries();
+
+        while (entries.hasMoreElements()) {
+            ZipEntry entry = (ZipEntry) entries.nextElement();
+
+            if (entry.isDirectory()) {
+                (new File(dest, entry.getName())).mkdirs();
+                continue;
+            }
+
+	    copyInputStream(zipFile.getInputStream(entry), new BufferedOutputStream(new FileOutputStream(new File(dest, entry.getName()))));
+        }
+	
+        zipFile.close();
+    }
+
+    public void copyInputStream(InputStream in, OutputStream out) throws IOException {
+        IOException ioe = null;
+
+        try {
+            byte[] buffer = new byte[2048];
+            int len;
+
+            while ((len = in.read(buffer)) >= 0) {
+                out.write(buffer, 0, len);
+            }
+        } finally {
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (IOException ex) {
+                if (ioe == null) {
+                    ioe = ex;
+                }
+            }
+
+            try {
+                if (out != null) {
+                    out.close();
+                }
+            } catch (IOException ex) {
+                if (ioe == null) {
+                    ioe = ex;
+                } else {
+                    ioe.addSuppressed(ex);
                 }
             }
         }
 
-        // The directory is now empty so delete it
-        return dir.delete();
-    }
-
-    public void unzip( File zip, File dest )
-        throws IOException
-    {
-        Enumeration entries;
-        ZipFile zipFile;
-
-        zipFile = new ZipFile( zip );
-
-        entries = zipFile.entries();
-
-        while ( entries.hasMoreElements() )
-        {
-            ZipEntry entry = (ZipEntry) entries.nextElement();
-
-            if ( entry.isDirectory() )
-            {
-                ( new File( dest, entry.getName() ) ).mkdirs();
-                continue;
-            }
-
-            copyInputStream( zipFile.getInputStream( entry ),
-                             new BufferedOutputStream( new FileOutputStream( new File( dest, entry.getName() ) ) ) );
-        }
-        zipFile.close();
-    }
-
-    public void copyInputStream( InputStream in, OutputStream out )
-        throws IOException
-    {
-        byte[] buffer = new byte[1024];
-        int len;
-
-        while ( ( len = in.read( buffer ) ) >= 0 )
-        {
-            out.write( buffer, 0, len );
-        }
-
-        in.close();
-        out.close();
+	if (ioe != null) {
+	    throw ioe;
+	}
     }
 
 }

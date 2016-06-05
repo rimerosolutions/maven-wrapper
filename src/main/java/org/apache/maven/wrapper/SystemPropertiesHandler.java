@@ -27,36 +27,34 @@ import java.util.Properties;
  */
 public class SystemPropertiesHandler {
 
-        public static Map<String, String> getSystemProperties(File propertiesFile) {
-                Map<String, String> propertyMap = new HashMap<String, String>();
+    public static Map<String, String> getSystemProperties(File propertiesFile) {
+        Map<String, String> propertyMap = new HashMap<String, String>();
 
-                if (!propertiesFile.isFile()) {
-                        return propertyMap;
-                }
-
-                Properties properties = new Properties();
-                FileInputStream inStream = null;
-
-                try {
-                        inStream = new FileInputStream(propertiesFile);
-
-                        try {
-                                properties.load(inStream);
-                        }
-                        finally {
-                                if (inStream != null) {
-                                        inStream.close();
-                                }
-                        }
-                }
-                catch (IOException e) {
-                        throw new RuntimeException("Error when loading properties file=" + propertiesFile, e);
-                }
-
-                for (Map.Entry e : properties.entrySet()) {
-                        propertyMap.put(e.getKey().toString(), e.getValue().toString());
-                }
-
-                return propertyMap;
+        if (!propertiesFile.isFile() || !propertiesFile.canRead()) {
+            return propertyMap;
         }
+
+        Properties properties = new Properties();
+        FileInputStream inStream = null;
+
+        try {
+            inStream = new FileInputStream(propertiesFile);
+
+            try {
+                properties.load(inStream);
+            } finally {
+                if (inStream != null) {
+                    inStream.close();
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Error when loading properties file=" + propertiesFile, e);
+        }
+
+        for (Map.Entry<Object, Object> e : properties.entrySet()) {
+            propertyMap.put(e.getKey().toString(), e.getValue().toString());
+        }
+
+        return propertyMap;
+    }
 }

@@ -31,19 +31,15 @@ import java.util.Map;
  */
 public enum Checksum {
 
-    SHA1("sha1", "SHA-1")
-    {
+    SHA1("sha1", "SHA-1") {
         @Override
-        protected MessageDigest getDigest() throws NoSuchAlgorithmException
-        {
+        protected MessageDigest getDigest() throws NoSuchAlgorithmException {
             return MessageDigest.getInstance("SHA-1");
         }
     },
-    MD5("md5", "MD5")
-    {
+    MD5("md5", "MD5") {
         @Override
-        protected MessageDigest getDigest() throws NoSuchAlgorithmException
-        {
+        protected MessageDigest getDigest() throws NoSuchAlgorithmException {
             return MessageDigest.getInstance("MD5");
         }
     };
@@ -54,70 +50,58 @@ public enum Checksum {
     private final String defaultExtension;
     private final List<String> aliases;
 
-    static
-    {
-        for (final Checksum checksum : Checksum.values())
-        {
-            for (final String alias : checksum.aliases)
-            {
+    static {
+        for (final Checksum checksum : Checksum.values()) {
+            for (final String alias : checksum.aliases) {
                 assert !CHECKSUM_BY_ALIAS.containsKey(alias) : "Duplicate checksum alias detected: " + alias;
                 CHECKSUM_BY_ALIAS.put(alias, checksum);
             }
         }
     }
 
-    Checksum(String defaultExtension, String... aliases)
-    {
+    Checksum(String defaultExtension, String... aliases) {
         this.defaultExtension = defaultExtension;
         this.aliases = Arrays.asList(aliases);
     }
 
-    public static Checksum fromAlias(String alias)
-    {
+    public static Checksum fromAlias(String alias) {
         return CHECKSUM_BY_ALIAS.get(alias);
     }
 
-    public String getDefaultExtension()
-    {
+    public String getDefaultExtension() {
         return defaultExtension;
     }
 
-    public boolean verify(InputStream data, String checksum)
-    {
+    public boolean verify(InputStream data, String checksum) {
         return checksum.equals(generate(data));
     }
 
-    public String generate(InputStream data)
-    {
-        try
-        {
+    public String generate(InputStream data) {
+        try {
             byte[] buffer = new byte[BUFFER_SIZE];
             int length = 0;
             MessageDigest digest = getDigest();
-            while ((length = data.read(buffer)) > 0)
-            {
+            while ((length = data.read(buffer)) > 0) {
                 digest.update(buffer, 0, length);
             }
             return asHex(digest.digest());
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             throw new RuntimeException("Could not generate checksum for stream.", e);
-        }
-        catch (NoSuchAlgorithmException e)
-        {
+        } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Could not generate checksum for stream.", e);
         }
     }
 
     protected abstract MessageDigest getDigest() throws NoSuchAlgorithmException;
 
-    private static String asHex(byte[] bytes)
-    {
+    private static String asHex(byte[] bytes) {
         final StringBuilder sb = new StringBuilder(2 * bytes.length);
-        for (final byte b : bytes) {
+
+        for (int i = 0; i < bytes.length; i++) {
+            byte b = bytes[i];
             sb.append(HEX_DIGITS[(b & 0xF0) >> 4]).append(HEX_DIGITS[(b & 0x0F)]);
         }
+
         return sb.toString();
     }
 }

@@ -16,25 +16,20 @@
 
 package org.apache.maven.wrapper.cli;
 
-public class ProjectPropertiesCommandLineConverter
-    extends AbstractPropertiesCommandLineConverter
-{
+public class ProjectPropertiesCommandLineConverter extends AbstractPropertiesCommandLineConverter {
 
     @Override
-    protected String getPropertyOption()
-    {
+    protected String getPropertyOption() {
         return "P";
     }
 
     @Override
-    protected String getPropertyOptionDetailed()
-    {
+    protected String getPropertyOptionDetailed() {
         return "project-prop";
     }
 
     @Override
-    protected String getPropertyOptionDescription()
-    {
+    protected String getPropertyOptionDescription() {
         return "Set project property for the build script (e.g. -Pmyprop=myvalue).";
     }
 }

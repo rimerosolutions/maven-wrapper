@@ -28,170 +28,135 @@ import java.util.Properties;
 /**
  * @author Hans Dockter
  */
-public class WrapperExecutor
-{
+public class WrapperExecutor {
     public static final String DISTRIBUTION_URL_PROPERTY = "distributionUrl";
-
     public static final String DISTRIBUTION_BASE_PROPERTY = "distributionBase";
-
     public static final String ZIP_STORE_BASE_PROPERTY = "zipStoreBase";
-
     public static final String DISTRIBUTION_PATH_PROPERTY = "distributionPath";
-
     public static final String ZIP_STORE_PATH_PROPERTY = "zipStorePath";
-
     public static final String VERIFY_DOWNLOAD_PROPERTY = "verifyDownload";
-
     public static final String CHECKSUM_ALGORITHM_PROPERTY = "checksumAlgorithm";
-
     public static final String CHECKSUM_URL_PROPERTY = "checksumUrl";
-
     private final Properties properties;
 
     private final File propertiesFile;
-
-    private final Appendable warningOutput;
-
     private final WrapperConfiguration config = new WrapperConfiguration();
 
-    public static WrapperExecutor forProjectDirectory( File projectDir, Appendable warningOutput )
-    {
-        return new WrapperExecutor( new File( projectDir, "maven/wrapper/maven-wrapper.properties" ), new Properties(),
-                                    warningOutput );
+    public static WrapperExecutor forProjectDirectory(File projectDir) {
+        return new WrapperExecutor(new File(projectDir, "maven/wrapper/maven-wrapper.properties"), new Properties());
     }
 
-    public static WrapperExecutor forWrapperPropertiesFile( File propertiesFile, Appendable warningOutput )
-    {
-        if ( !propertiesFile.exists() )
-        {
-            throw new RuntimeException( String.format( "Wrapper properties file '%s' does not exist.", propertiesFile ) );
+    public static WrapperExecutor forWrapperPropertiesFile(File propertiesFile) {
+        if (!propertiesFile.exists()) {
+            throw new RuntimeException(String.format("Wrapper properties file '%s' does not exist.", propertiesFile));
         }
-        return new WrapperExecutor( propertiesFile, new Properties(), warningOutput );
+	
+        return new WrapperExecutor(propertiesFile, new Properties());
     }
 
-    WrapperExecutor( File propertiesFile, Properties properties, Appendable warningOutput )
-    {
+    WrapperExecutor(File propertiesFile, Properties properties) {
         this.properties = properties;
         this.propertiesFile = propertiesFile;
-        this.warningOutput = warningOutput;
-        if ( propertiesFile.exists() )
-        {
-            try
-            {
-                loadProperties( propertiesFile, properties );
-                config.setDistribution( prepareDistributionUri() );
-                config.setDistributionBase( getProperty( DISTRIBUTION_BASE_PROPERTY, config.getDistributionBase() ) );
-                config.setDistributionPath( getProperty( DISTRIBUTION_PATH_PROPERTY, config.getDistributionPath() ) );
-                config.setZipBase( getProperty( ZIP_STORE_BASE_PROPERTY, config.getZipBase() ) );
-                config.setZipPath( getProperty( ZIP_STORE_PATH_PROPERTY, config.getZipPath() ) );
-                config.setVerifyDownload( Boolean.valueOf( getProperty( VERIFY_DOWNLOAD_PROPERTY, Boolean.FALSE.toString() ) ) );
-                if ( config.isVerifyDownload() ) {
-                    config.setChecksumAlgorithm( Checksum.valueOf( getProperty( CHECKSUM_ALGORITHM_PROPERTY ) ) );
-                    config.setChecksum( prepareChecksumUri() );
-                }
-            }
-            catch ( Exception e )
-            {
-                throw new RuntimeException( String.format( "Could not load wrapper properties from '%s'.",
-                                                           propertiesFile ), e );
+
+        if (propertiesFile.exists()) {
+            try {
+                loadProperties(propertiesFile, properties);
+
+		config.setDistributionBase(getProperty(DISTRIBUTION_BASE_PROPERTY, config.getDistributionBase()));
+                config.setDistributionPath(getProperty(DISTRIBUTION_PATH_PROPERTY, config.getDistributionPath()));
+                config.setZipBase(getProperty(ZIP_STORE_BASE_PROPERTY, config.getZipBase()));
+                config.setZipPath(getProperty(ZIP_STORE_PATH_PROPERTY, config.getZipPath()));
+		config.setDistributionUris(prepareDistributionUris());
+		config.setVerifyDownload(Boolean.valueOf(getProperty(VERIFY_DOWNLOAD_PROPERTY, "false")));		
+
+		if (config.isVerifyDownload()) {
+		    config.setChecksumAlgorithm(Checksum.valueOf(getProperty(CHECKSUM_ALGORITHM_PROPERTY)));
+		}
+            } catch (Exception e) {
+                throw new RuntimeException(String.format("Could not load wrapper properties from '%s'.", propertiesFile), e);
             }
         }
     }
 
-    private List<URI> prepareDistributionUri()
-        throws URISyntaxException
-    {
-        return readRequiredUriList( DISTRIBUTION_URL_PROPERTY );
+    private List<URI> prepareDistributionUris() throws URISyntaxException {
+        return readRequiredUriList(DISTRIBUTION_URL_PROPERTY);
     }
+    
+    private List<URI> readRequiredUriList(String key) throws URISyntaxException {
+        List<URI> uriList = new ArrayList<URI>();
 
-    private List<URI> prepareChecksumUri()
-            throws URISyntaxException
-    {
-        return readRequiredUriList( CHECKSUM_URL_PROPERTY );
-    }
-
-    private List<URI> readRequiredUriList( String key )
-        throws URISyntaxException
-    {
-        List<URI> list = new ArrayList<URI>();
-        if ( properties.getProperty( key ) != null )
-        {
-            for ( String value : getProperty( key ).split( "," ) )
-            {
-                URI uri = new URI( value );
-                if ( uri.getScheme() == null )
-                {
-                    uri = new File( propertiesFile.getParentFile(), uri.getSchemeSpecificPart() ).toURI();
+        if (properties.getProperty(key) != null) {
+            for (String value : getProperty(key).split(",")) {
+                if (value.trim().length() == 0) {
+                    continue;
                 }
-                list.add( uri );
+
+                URI uri = URI.create(value);
+
+                if (uri.getScheme() == null) {
+                    uri = new File(propertiesFile.getParentFile(), uri.getSchemeSpecificPart()).toURI();
+                }
+
+                uriList.add(uri);
             }
-            return list;
+
+            return uriList;
         }
 
-        reportMissingProperty( key );
+        reportMissingProperty(key);
         return null; // previous line will fail
     }
 
-    private static void loadProperties( File propertiesFile, Properties properties )
-        throws IOException
-    {
-        InputStream inStream = new FileInputStream( propertiesFile );
-        try
-        {
-            properties.load( inStream );
-        }
-        finally
-        {
+    private static void loadProperties(File propertiesFile, Properties properties) throws IOException {
+        InputStream inStream = new FileInputStream(propertiesFile);
+
+        try {
+            properties.load(inStream);
+        } finally {
             inStream.close();
         }
     }
 
     /**
-     * Returns the distribution which this wrapper will use. Returns null if no wrapper meta-data was found in the
-     * specified project directory.
+     * Returns the distribution which this wrapper will use. Returns null if no
+     * wrapper meta-data was found in the specified project directory.
      */
-    public List<URI> getDistribution()
-    {
-        return config.getDistribution();
+    public List<URI> getDistributionUris() {
+        return config.getDistributionUris();
     }
 
     /**
      * Returns the configuration for this wrapper.
      */
-    public WrapperConfiguration getConfiguration()
-    {
+    public WrapperConfiguration getConfiguration() {
         return config;
     }
 
-    public void execute( String[] args, Installer install, BootstrapMainStarter bootstrapMainStarter )
-        throws Exception
-    {
-        File mavenHome = install.createDist( config );
-        bootstrapMainStarter.start( args, mavenHome );
+    public void execute(String[] args, Installer install, BootstrapMainStarter bootstrapMainStarter) throws Exception {
+        File mavenHome = install.createDist(config);
+	bootstrapMainStarter.start(args, mavenHome);
     }
 
-    private String getProperty( String propertyName )
-    {
-        return getProperty( propertyName, null );
+    private String getProperty(String propertyName) {
+        return getProperty(propertyName, null);
     }
 
-    private String getProperty( String propertyName, String defaultValue )
-    {
-        String value = properties.getProperty( propertyName );
-        if ( value != null )
-        {
+    private String getProperty(String propertyName, String defaultValue) {
+        String value = properties.getProperty(propertyName);
+
+	if (value != null) {
             return value;
         }
-        if ( defaultValue != null )
-        {
+	
+        if (defaultValue != null) {
             return defaultValue;
         }
-        return reportMissingProperty( propertyName );
+	
+        return reportMissingProperty(propertyName);
     }
 
-    private String reportMissingProperty( String propertyName )
-    {
-        throw new RuntimeException( String.format( "No value with key '%s' specified in wrapper properties file '%s'.",
-                                                   propertyName, propertiesFile ) );
+    private String reportMissingProperty(String propertyName) {
+        throw new RuntimeException(
+                String.format("No value with key '%s' specified in wrapper properties file '%s'.", propertyName, propertiesFile));
     }
 }

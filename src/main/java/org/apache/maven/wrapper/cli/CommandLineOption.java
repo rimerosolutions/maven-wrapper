@@ -19,8 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class CommandLineOption
-{
+public class CommandLineOption {
     private final Set<String> options = new HashSet<String>();
 
     private Class<?> argumentType = Void.TYPE;
@@ -33,100 +32,93 @@ public class CommandLineOption
 
     private boolean incubating;
 
-    public CommandLineOption( Iterable<String> options )
-    {
-        for ( String option : options )
-        {
-            this.options.add( option );
+    public CommandLineOption(Iterable<String> options) {
+        for (String option : options) {
+            this.options.add(option);
         }
     }
 
-    public Set<String> getOptions()
-    {
+    public Set<String> getOptions() {
         return options;
     }
 
-    public CommandLineOption hasArgument()
-    {
+    public CommandLineOption hasArgument() {
         argumentType = String.class;
+
         return this;
     }
 
-    public CommandLineOption hasArguments()
-    {
+    public CommandLineOption hasArguments() {
         argumentType = List.class;
+	
         return this;
     }
 
-    public String getSubcommand()
-    {
+    public String getSubcommand() {
         return subcommand;
     }
 
-    public CommandLineOption mapsToSubcommand( String command )
-    {
+    public CommandLineOption mapsToSubcommand(String command) {
         this.subcommand = command;
+
         return this;
     }
 
-    public String getDescription()
-    {
+    public String getDescription() {
         StringBuilder result = new StringBuilder();
-        if ( description != null )
-        {
-            result.append( description );
+
+        if (description != null) {
+            result.append(description);
         }
-        if ( deprecationWarning != null )
-        {
-            if ( result.length() > 0 )
-            {
-                result.append( ' ' );
+
+        if (deprecationWarning != null) {
+            if (result.length() > 0) {
+                result.append(' ');
             }
-            result.append( "[deprecated - " );
-            result.append( deprecationWarning );
-            result.append( "]" );
+	    
+            result.append("[deprecated - ");
+            result.append(deprecationWarning);
+            result.append("]");
         }
-        if ( incubating )
-        {
-            if ( result.length() > 0 )
-            {
-                result.append( ' ' );
+
+        if (incubating) {
+            if (result.length() > 0) {
+                result.append(' ');
             }
-            result.append( "[incubating]" );
+	    
+            result.append("[incubating]");
         }
+
         return result.toString();
     }
 
-    public CommandLineOption hasDescription( String description )
-    {
+    public CommandLineOption hasDescription(String description) {
         this.description = description;
+
         return this;
     }
 
-    public boolean getAllowsArguments()
-    {
+    public boolean getAllowsArguments() {
         return argumentType != Void.TYPE;
     }
 
-    public boolean getAllowsMultipleArguments()
-    {
+    public boolean getAllowsMultipleArguments() {
         return argumentType == List.class;
     }
 
-    public CommandLineOption deprecated( String deprecationWarning )
-    {
+    public CommandLineOption deprecated(String deprecationWarning) {
         this.deprecationWarning = deprecationWarning;
+
         return this;
     }
 
-    public CommandLineOption incubating()
-    {
+    public CommandLineOption incubating() {
         incubating = true;
+
         return this;
     }
 
-    public String getDeprecationWarning()
-    {
+    public String getDeprecationWarning() {
         return deprecationWarning;
     }
 }

@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
-
 import org.apache.commons.io.IOUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
@@ -43,143 +42,127 @@ import org.codehaus.plexus.configuration.PlexusConfiguration;
  */
 public class MavenWrapperMojoTest extends AbstractMojoTestCase {
 
-        private static final String MAVEN_WRAPPER_PLUGIN_NAME = "wrapper-maven-plugin";
-        private static final String TEST_WRAPPER_DIR_LOCATION = "target/test-wrapper";
-        private static final String TEST_SUPPORT_DIR_LOCATION = "support";
-        private static final String TEST_DISTRIBUTION_URL = "http://mirrors.ibiblio.org/maven2/org/apache/maven/apache-maven";
-        private static final List<String> TEST_DISTRIBUTION_URL_LIST = Collections.unmodifiableList(Arrays.asList(
-                "http://mirrors.ibiblio.org/maven2/org/apache/maven/apache-maven",
-                "https://repo1.maven.org/maven2/org/apache/maven/apache-maven"));
-        private static final String PLUGIN_TEST_FILE_LOCATION = "src/test/resources/org/apache/maven/wrapper/plugin-config.xml";
-        private static final String PLUGIN_TEST_ARTIFACT_LOCATION = "src/test/resources/org/apache/maven/wrapper/dummy-wrapper-artifact.txt";
-        private static final String MAVEN_RUNTIME_VERSION = "0.0.1";
-        private static final Boolean VERIFY_DOWNLOAD = true;
-        private static final String CHECKSUM_ALGORITHM = "MD5";
-        private static final String CHECKSUM_EXTENSION = "md5";
+    private static final String MAVEN_WRAPPER_PLUGIN_NAME = "wrapper-maven-plugin";
+    private static final String TEST_WRAPPER_DIR_LOCATION = "target/test-wrapper";
+    private static final String TEST_SUPPORT_DIR_LOCATION = "support";
+    private static final String TEST_DISTRIBUTION_URL = "http://mirrors.ibiblio.org/maven2/org/apache/maven/apache-maven";
+    private static final List<String> TEST_DISTRIBUTION_URL_LIST = Collections
+            .unmodifiableList(Arrays.asList("http://mirrors.ibiblio.org/maven2/org/apache/maven/apache-maven",
+                    "https://repo1.maven.org/maven2/org/apache/maven/apache-maven"));
+    private static final String PLUGIN_TEST_FILE_LOCATION = "src/test/resources/org/apache/maven/wrapper/plugin-config.xml";
+    private static final String PLUGIN_TEST_ARTIFACT_LOCATION = "src/test/resources/org/apache/maven/wrapper/dummy-wrapper-artifact.txt";
+    private static final String MAVEN_RUNTIME_VERSION = "0.0.1";
+    private static final Boolean VERIFY_DOWNLOAD = true;
+    private static final String CHECKSUM_ALGORITHM = "MD5";
+    private static final String CHECKSUM_EXTENSION = "md5";
 
-        private File wrapperDir;
-        private File wrapperSupportDir;
+    private File wrapperDir;
+    private File wrapperSupportDir;
 
-        private MavenWrapperMojo lookupMavenWrapperMojo() throws Exception {
-                File pluginXml = new File(getBasedir(), PLUGIN_TEST_FILE_LOCATION);
-                PlexusConfiguration pluginConfiguration = extractPluginConfiguration(MAVEN_WRAPPER_PLUGIN_NAME, pluginXml);
-                MavenWrapperMojo mojoInstance = MavenWrapperMojo.class.newInstance();
-                MavenWrapperMojo mojo = (MavenWrapperMojo) configureMojo(mojoInstance, pluginConfiguration);
+    private MavenWrapperMojo lookupMavenWrapperMojo() throws Exception {
+        File pluginXml = new File(getBasedir(), PLUGIN_TEST_FILE_LOCATION);
+        PlexusConfiguration pluginConfiguration = extractPluginConfiguration(MAVEN_WRAPPER_PLUGIN_NAME, pluginXml);
+        MavenWrapperMojo mojoInstance = MavenWrapperMojo.class.newInstance();
+        MavenWrapperMojo mojo = (MavenWrapperMojo) configureMojo(mojoInstance, pluginConfiguration);
 
-                return mojo;
+        return mojo;
+    }
+
+    private Properties readProperties() throws IOException {
+        InputStream in = null;
+
+        try {
+            in = new FileInputStream(new File(wrapperSupportDir, MavenWrapperMojo.WRAPPER_PROPERTIES_FILE_NAME));
+            Properties props = new Properties();
+            props.load(in);
+
+            return props;
+        } finally {
+            if (in != null) {
+                IOUtils.closeQuietly(in);
+            }
         }
+    }
 
-        private Properties readProperties() throws IOException {
-                InputStream in = null;
+    private String readDistributionUrlFromWrapperProperties(final Properties properties) throws IOException {
+        return properties.getProperty(MavenWrapperMojo.DISTRIBUTION_URL_PROPERTY);
+    }
 
-                try {
-                        in = new FileInputStream(new File(wrapperSupportDir, MavenWrapperMojo.WRAPPER_PROPERTIES_FILE_NAME));
-                        Properties props = new Properties();
-                        props.load(in);
+    private Boolean readVerifyDownloadFromWrapperProperties(final Properties properties) throws IOException {
+        return Boolean.valueOf(properties.getProperty(MavenWrapperMojo.VERIFY_DOWNLOAD_PROPERTY));
+    }
 
-                        return props;
-                } finally {
-                        if (in != null) {
-                                IOUtils.closeQuietly(in);
-                        }
-                }
+    private String readChecksumAlgorithmFromWrapperProperties(final Properties properties) throws IOException {
+        return properties.getProperty(MavenWrapperMojo.CHECKSUM_ALGORITHM_PROPERTY);
+    }
+
+    private String getExpectedDistributionUrl() {
+        StringBuilder sb = new StringBuilder();
+        for (String testDistributionUrl : TEST_DISTRIBUTION_URL_LIST) {
+            sb.append(testDistributionUrl).append('/');
+            sb.append(String.format(MavenWrapperMojo.DIST_FILENAME_PATH_TEMPLATE, MAVEN_RUNTIME_VERSION, MAVEN_RUNTIME_VERSION));
+            sb.append(",");
         }
+        sb.setLength(sb.length() - 1);
+        return sb.toString();
+    }    
 
-        private String readDistributionUrlFromWrapperProperties(final Properties properties) throws IOException {
-                return properties.getProperty(MavenWrapperMojo.DISTRIBUTION_URL_PROPERTY);
-        }
+    protected void setUp() throws Exception {
+        super.setUp();
+        wrapperDir = new File(getBasedir(), TEST_WRAPPER_DIR_LOCATION);
+        wrapperSupportDir = new File(wrapperDir, TEST_SUPPORT_DIR_LOCATION);
+    }
 
-        private Boolean readVerifyDownloadFromWrapperProperties(final Properties properties) throws IOException {
-                return Boolean.valueOf(properties.getProperty(MavenWrapperMojo.VERIFY_DOWNLOAD_PROPERTY));
-        }
+    public void testMojoLookup() throws Exception {
+        MavenWrapperMojo mojo = lookupMavenWrapperMojo();
+        assertNotNull(mojo);
+    }
 
-        private String readChecksumAlgorithmFromWrapperProperties(final Properties properties) throws IOException {
-                return properties.getProperty(MavenWrapperMojo.CHECKSUM_ALGORITHM_PROPERTY);
-        }
+    public void testMojoParameters() throws Exception {
+        MavenWrapperMojo mojo = lookupMavenWrapperMojo();
 
-        private String readChecksumUrlFromWrapperProperties(final Properties properties) throws IOException {
-                return properties.getProperty(MavenWrapperMojo.CHECKSUM_URL_PROPERTY);
-        }
+        assertNotNull(mojo.getWrapperDirectory());
+        assertNotNull(mojo.getBaseDistributionUrl());
+        assertNotNull(mojo.getBaseDistributionUrlList());
+        assertNotNull(mojo.getWrapperScriptDirectory());
+        assertNotNull(mojo.getMavenVersion());
+        assertNotNull(mojo.getVerifyDownload());
+        assertNotNull(mojo.getChecksumExtension());
+        assertNotNull(mojo.getChecksumAlgorithm());
 
-        private String getExpectedDistributionUrl() {
-                StringBuilder sb = new StringBuilder();
-                for (String testDistributionUrl : TEST_DISTRIBUTION_URL_LIST) {
-                        sb.append(testDistributionUrl).append('/');
-                        sb.append(String.format(MavenWrapperMojo.DIST_FILENAME_PATH_TEMPLATE, MAVEN_RUNTIME_VERSION, MAVEN_RUNTIME_VERSION));
-                        sb.append(",");
-                }
-                sb.setLength(sb.length() - 1);
-                return sb.toString();
-        }
+        assertEquals(wrapperDir.getAbsolutePath(), mojo.getWrapperScriptDirectory());
+        assertEquals(wrapperSupportDir.getAbsolutePath(), mojo.getWrapperDirectory());
+        assertEquals(MAVEN_RUNTIME_VERSION, mojo.getMavenVersion());
+        assertEquals(TEST_DISTRIBUTION_URL, mojo.getBaseDistributionUrl());
+        assertEquals(TEST_DISTRIBUTION_URL_LIST, mojo.getBaseDistributionUrlList());
+        assertEquals(VERIFY_DOWNLOAD, mojo.getVerifyDownload());
+        assertEquals(CHECKSUM_EXTENSION, mojo.getChecksumExtension());
+        assertEquals(CHECKSUM_ALGORITHM, mojo.getChecksumAlgorithm());
+    }
 
-        private String getExpectedChecksumUrl() {
-                StringBuilder sb = new StringBuilder();
-                for (String testDistributionUrl : TEST_DISTRIBUTION_URL_LIST) {
-                        sb.append(testDistributionUrl).append('/');
-                        sb.append(String.format(MavenWrapperMojo.CHECKSUM_FILENAME_PATH_TEMPLATE, MAVEN_RUNTIME_VERSION, MAVEN_RUNTIME_VERSION, CHECKSUM_EXTENSION));
-                        sb.append(",");
-                }
-                sb.setLength(sb.length() - 1);
-                return sb.toString();
-        }
+    public void testMojoExecution() throws Exception {
+        Artifact artifact = mock(Artifact.class);
+        when(artifact.getFile()).thenReturn(new File(getBasedir(), PLUGIN_TEST_ARTIFACT_LOCATION));
 
-        protected void setUp() throws Exception {
-                super.setUp();
-                wrapperDir = new File(getBasedir(), TEST_WRAPPER_DIR_LOCATION);
-                wrapperSupportDir = new File(wrapperDir, TEST_SUPPORT_DIR_LOCATION);
-        }
+        PluginDescriptor pluginDescriptor = mock(PluginDescriptor.class);
+        when(pluginDescriptor.getPluginArtifact()).thenReturn(artifact);
 
-        public void testMojoLookup() throws Exception {
-                MavenWrapperMojo mojo = lookupMavenWrapperMojo();
-                assertNotNull(mojo);
-        }
+        MavenWrapperMojo mojo = lookupMavenWrapperMojo();
 
-        public void testMojoParameters() throws Exception {
-                MavenWrapperMojo mojo = lookupMavenWrapperMojo();
+        mojo.setPlugin(pluginDescriptor);
+        mojo.setMavenVersion(MAVEN_RUNTIME_VERSION);
+        mojo.execute();
 
-                assertNotNull(mojo.getWrapperDirectory());
-                assertNotNull(mojo.getBaseDistributionUrl());
-                assertNotNull(mojo.getBaseDistributionUrlList());
-                assertNotNull(mojo.getWrapperScriptDirectory());
-                assertNotNull(mojo.getMavenVersion());
-                assertNotNull(mojo.getVerifyDownload());
-                assertNotNull(mojo.getChecksumExtension());
-                assertNotNull(mojo.getChecksumAlgorithm());
+        Properties properties = readProperties();
 
-                assertEquals(wrapperDir.getAbsolutePath(), mojo.getWrapperScriptDirectory());
-                assertEquals(wrapperSupportDir.getAbsolutePath(), mojo.getWrapperDirectory());
-                assertEquals(MAVEN_RUNTIME_VERSION, mojo.getMavenVersion());
-                assertEquals(TEST_DISTRIBUTION_URL, mojo.getBaseDistributionUrl());
-                assertEquals(TEST_DISTRIBUTION_URL_LIST, mojo.getBaseDistributionUrlList());
-                assertEquals(VERIFY_DOWNLOAD, mojo.getVerifyDownload());
-                assertEquals(CHECKSUM_EXTENSION, mojo.getChecksumExtension());
-                assertEquals(CHECKSUM_ALGORITHM, mojo.getChecksumAlgorithm());
-        }
+        assertTrue(new File(mojo.getWrapperScriptDirectory(), MavenWrapperMojo.SCRIPT_FILENAME_UNIX).exists());
+        assertTrue(new File(mojo.getWrapperScriptDirectory(), MavenWrapperMojo.SCRIPT_FILENAME_WINDOWS).exists());
+        assertTrue(new File(mojo.getWrapperDirectory(), MavenWrapperMojo.WRAPPER_PROPERTIES_FILE_NAME).exists());
+        assertTrue(new File(mojo.getWrapperDirectory(), MavenWrapperMojo.WRAPPER_JAR_FILE_NAME).exists());
+        assertEquals(getExpectedDistributionUrl(), readDistributionUrlFromWrapperProperties(properties));
+        assertEquals(VERIFY_DOWNLOAD, readVerifyDownloadFromWrapperProperties(properties));
+        assertEquals(CHECKSUM_ALGORITHM, readChecksumAlgorithmFromWrapperProperties(properties));
 
-        public void testMojoExecution() throws Exception {
-                Artifact artifact = mock(Artifact.class);
-                when(artifact.getFile()).thenReturn(new File(getBasedir(), PLUGIN_TEST_ARTIFACT_LOCATION));
-
-                PluginDescriptor pluginDescriptor = mock(PluginDescriptor.class);
-                when(pluginDescriptor.getPluginArtifact()).thenReturn(artifact);
-
-                MavenWrapperMojo mojo = lookupMavenWrapperMojo();
-
-                mojo.setPlugin(pluginDescriptor);
-                mojo.setMavenVersion(MAVEN_RUNTIME_VERSION);
-                mojo.execute();
-
-                Properties properties = readProperties();
-
-                assertTrue(new File(mojo.getWrapperScriptDirectory(), MavenWrapperMojo.SCRIPT_FILENAME_UNIX).exists());
-                assertTrue(new File(mojo.getWrapperScriptDirectory(), MavenWrapperMojo.SCRIPT_FILENAME_WINDOWS).exists());
-                assertTrue(new File(mojo.getWrapperDirectory(), MavenWrapperMojo.WRAPPER_PROPERTIES_FILE_NAME).exists());
-                assertTrue(new File(mojo.getWrapperDirectory(), MavenWrapperMojo.WRAPPER_JAR_FILE_NAME).exists());
-                assertEquals(getExpectedDistributionUrl(), readDistributionUrlFromWrapperProperties(properties));
-                assertEquals(VERIFY_DOWNLOAD, readVerifyDownloadFromWrapperProperties(properties));
-                assertEquals(CHECKSUM_ALGORITHM, readChecksumAlgorithmFromWrapperProperties(properties));
-                assertEquals(getExpectedChecksumUrl(), readChecksumUrlFromWrapperProperties(properties));
-
-                verify(artifact, times(1)).getFile();
-        }
+        verify(artifact, times(1)).getFile();
+    }
 }

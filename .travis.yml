@@ -1,5 +1,7 @@
 language: java
 install: ./mvnw clean
+jdk:
+  - openjdk6
 script: ./mvnw test
 notifications:
   email: false

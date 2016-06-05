@@ -16,20 +16,19 @@
 package org.apache.maven.wrapper.cli;
 
 /**
- * A {@code CommandLineArgumentException} is thrown when command-line arguments cannot be parsed.
- * 
+ * A {@code CommandLineArgumentException} is thrown when command-line arguments
+ * cannot be parsed.
+ *
  * @author Hans Dockter
  */
-public class CommandLineArgumentException
-    extends RuntimeException
-{
-    public CommandLineArgumentException( String message )
-    {
-        super( message );
+public class CommandLineArgumentException extends RuntimeException {
+    private static final long serialVersionUID = 7539123031140668557L;
+
+    public CommandLineArgumentException(String message) {
+        super(message);
     }
 
-    public CommandLineArgumentException( String message, Throwable cause )
-    {
-        super( message, cause );
+    public CommandLineArgumentException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

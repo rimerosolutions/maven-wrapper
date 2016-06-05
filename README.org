@@ -4,37 +4,39 @@
 [[https://travis-ci.org/rimerosolutions/maven-wrapper/][file:https://travis-ci.org/rimerosolutions/maven-wrapper.png]]
 [[http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22wrapper-maven-plugin%22][file:https://img.shields.io/maven-central/v/com.rimerosolutions.maven.plugins/wrapper-maven-plugin.svg]]
 
-* Introduction
-This is a copy of the [[http://www.gradle.org/docs/current/userguide/gradle_wrapper.html][Gradle wrapper]] ported for use with [[http://maven.apache.org][Apache Maven]].
-=maven-wrapper= is now available from [[http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.rimerosolutions.maven.plugins%22][Maven Central]].
+* Overview
+This is a copy of the [[http://www.gradle.org/docs/current/userguide/gradle_wrapper.html][Gradle wrapper]] ported for use with [[http://maven.apache.org][Apache Maven]]. =maven-wrapper= is available from [[http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.rimerosolutions.maven.plugins%22][Maven Central]].
 
 The Maven Command Line Wrapper will auto-download and install Apache Maven from the Internet and then run your Maven goals.
+=maven-wrapper= ships as Maven plugin that generates wrapper scripts and a configuration file to bootstrap Maven download and installation.
 
-This is a fork of [[https://github.com/bdemers/maven-wrapper][bdemers' maven-wrapper]] in order to provide the Maven Wrapper as a Maven plugin, for more flexible reuse/integration. Once you have a Maven project that you want to distribute, you can generate a wrapper so that 
+** Rationale
+This is a fork of [[https://github.com/bdemers/maven-wrapper][bdemers' maven-wrapper]] in order to provide the Maven Wrapper as a Maven plugin, for more flexible reuse/integration. Once you have a Maven project that you want to distribute, you can generate a wrapper so that:
 
 - The target audience can easily execute Maven goals without an existing Maven application as a pre-requisite.
-- You can control the version of Maven that is to be used to build the project in case there are Maven versions compatibility concerns.
+- You can control the version of Maven that is to be used to build the project, if are versions compatibility concerns.
 
-For example if used to run
+** Integration example
+
+For a full and small practical integration example, checkout the [[https://github.com/rimerosolutions/maven-wrapper-example][Maven Command Line Wrapper Example]] project.
+
+If you used to run
 
  : mvn clean install
 
 Then you would now run (without a leading =./= for MS Windows)
  : ./mvnw clean install
 	
-A wrapper created with Maven 3.0.4 will request Maven 3.0.4 if it's not already installed on the user's machine.
-However, you can still request a specific Maven version by overriding the default behaviour.
+A wrapper created with Maven 3.0.4 will request Maven 3.0.4, if it's not already installed on the user's machine.
+However, you can still request a specific Maven version by overriding the default behaviour (Maven plugin configuration).
 
 Notes: You need a valid JDK at least 1.6. The plugin was tested with Maven 3.0.2 and above.
 
-For a small practical integration example, checkout the [[https://github.com/rimerosolutions/maven-wrapper-example][Maven Command Line Wrapper Example]] project.
-
 * Maven Goals and Usage
-
 For the list of goals and a usage guide, please consult the [[https://github.com/rimerosolutions/maven-wrapper/wiki][Wiki]].
 	
 * Generating the Maven wrapper
-After integrating the wrapper in another Maven project, run the following command to generate the wrapper.
+After integrating the wrapper into your Maven project (plugin section), run the following command to generate the wrapper.
 
  : mvn wrapper:wrapper
 
@@ -45,5 +47,9 @@ The =maven= folder is generated with the relevant jar and properties file in the
 You can now start using either the =mvnw= or =mvnw.bat= commands on any project without an existing maven installation!
 
 * Articles
-
 [[http://jakub.marchwicki.pl/posts/2015/06/04/maven-wrapper/]]
+
+* Contributing
+Pull requests, issues creation, suggestions, documentation improvements are welcome.
+
+Big thank you to all of you who contributed to this project so far.
