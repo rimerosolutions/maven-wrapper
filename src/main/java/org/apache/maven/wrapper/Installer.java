@@ -66,8 +66,6 @@ public class Installer {
 		
                 if (failure == null) {
                     failure = e;
-                } else if (failure != e) {
-                    failure.addSuppressed(e);
                 }
             }
         }
@@ -315,8 +313,6 @@ public class Installer {
             } catch (IOException ex) {
                 if (ioe == null) {
                     ioe = ex;
-                } else {
-                    ioe.addSuppressed(ex);
                 }
             }
         }
