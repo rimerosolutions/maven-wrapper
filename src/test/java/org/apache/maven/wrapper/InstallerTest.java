@@ -312,8 +312,6 @@ public class InstallerTest {
             Assert.fail("Expected RuntimeException");
         } catch (final IOException e) {
             Assert.assertEquals("Connection refused to '" + BROKEN_DISTRIBUTION_URI + "'.", e.getMessage());
-            Assert.assertEquals(1, e.getSuppressed().length);
-            Assert.assertEquals("Connection refused to '" + BROKEN_DISTRIBUTION_URI + "'.", e.getSuppressed()[0].getMessage());
         }
 
         verify(download, times(2)).download(eq(BROKEN_DISTRIBUTION_URI), any(File.class));
