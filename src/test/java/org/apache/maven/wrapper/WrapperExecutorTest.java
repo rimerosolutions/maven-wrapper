@@ -179,7 +179,7 @@ public class WrapperExecutorTest {
             Assert.fail("Expected RuntimeException");
         } catch (RuntimeException e) {
             Assert.assertEquals("Could not load wrapper properties from '" + propertiesFile + "'.", e.getMessage());
-            Assert.assertEquals("No enum constant org.apache.maven.wrapper.Checksum.FOO_BAR", e.getCause().getMessage());
+            Assert.assertTrue(e.getCause().getMessage().toLowerCase().indexOf("no enum") != -1);
         }
     }
 
